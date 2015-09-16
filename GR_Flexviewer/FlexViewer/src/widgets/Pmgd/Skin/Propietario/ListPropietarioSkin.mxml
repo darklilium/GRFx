@@ -1,0 +1,618 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Skin xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		xmlns:s="library://ns.adobe.com/flex/spark" 
+		xmlns:mx="library://ns.adobe.com/flex/mx" initialize="skin1_initializeHandler(event)">
+	<!-- host component -->
+	<fx:Metadata>
+		[HostComponent("widgets.Pmgd.Skin.Propietario.ListPropietario")]
+		
+	</fx:Metadata>
+	<fx:Declarations>
+		<fx:Array id="validatorsArray">
+			<mx:StringValidator id="RazPropValidator" source="{RazProp}" property="text" required="true" trigger="{BtnGrabar}" triggerEvent="click"/>                     
+			<mx:StringValidator id="SiglaPropValidator" source="{SiglaProp}" property="text" required="true" trigger="{BtnGrabar}" triggerEvent="click"/>
+			<mx:StringValidator id="RutPropValidator" source="{RutProp}" property="text" required="true" trigger="{BtnGrabar}" triggerEvent="click"/>
+			<mx:StringValidator id="DireccPropValidator" source="{DireccProp}" property="text" required="true" trigger="{BtnGrabar}" triggerEvent="click"/>
+			<mx:StringValidator id="ReprePropValidator" source="{RepreProp}" property="text" required="true" trigger="{BtnGrabar}" triggerEvent="click"/>
+			<mx:StringValidator id="FonoPropValidator" source="{FonoProp}" property="text" required="true" trigger="{BtnGrabar}" triggerEvent="click"/>
+			<mx:EmailValidator id="emailValidator" source="{email}" property="text" required="true" trigger="{BtnGrabar}" triggerEvent="click"/>
+			
+		</fx:Array>
+		
+		<fx:Array id="validatorsArrayModProp">
+			<mx:StringValidator id="RazPropValidatorMod" source="{RazPropMod}" property="text" required="true" trigger="{BtnGrabarMod}" triggerEvent="click"/>                        
+			<mx:StringValidator id="SiglaPropValidatorMod" source="{SiglaPropMod}" property="text" required="true" trigger="{BtnGrabarMod}" triggerEvent="click"/>
+			<mx:StringValidator id="RutPropValidatorMod" source="{RutPropMod}" property="text" required="true" trigger="{BtnGrabarMod}" triggerEvent="click"/>
+			<mx:StringValidator id="DireccPropValidatorMod" source="{DireccPropMod}" property="text" required="true" trigger="{BtnGrabarMod}" triggerEvent="click"/>
+			<mx:StringValidator id="ReprePropValidatorMod" source="{ReprePropMod}" property="text" required="true" trigger="{BtnGrabarMod}" triggerEvent="click"/>
+			<mx:StringValidator id="FonoPropValidatorMod" source="{FonoPropMod}" property="text" required="true" trigger="{BtnGrabarMod}" triggerEvent="click"/>
+			<mx:EmailValidator id="emailValidatorMod" source="{emailMod}" property="text" required="true" trigger="{BtnGrabarMod}" triggerEvent="click"/>
+			
+		</fx:Array>  
+		
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			import com.esri.ags.FeatureSet;
+			import com.esri.ags.Graphic;
+			import com.esri.ags.layers.FeatureLayer;
+			import com.esri.ags.layers.supportClasses.FeatureEditResults;
+			import com.esri.ags.tasks.QueryTask;
+			import com.esri.ags.tasks.supportClasses.Query;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.events.CloseEvent;
+			import mx.events.FlexEvent;
+			import mx.events.ListEvent;
+			import mx.rpc.AsyncResponder;
+			import mx.rpc.Fault;
+			import mx.utils.StringUtil;
+			import mx.validators.Validator;
+			
+			import widgets.Pmgd.Class.ValidarRut;
+			import widgets.Pmgd.Url.Url;
+			
+		
+		
+			
+			[Bindable]private var errors:Array;
+			
+			
+			
+			
+			public function btnFunction(event:MouseEvent):void{
+				
+				switch(event.currentTarget.id)
+				{
+					case "BtnNewProp":
+					{
+						
+						ListaPropietario.visible = false;
+						NewProp.visible = true;
+						break;
+					}
+					case "BtnModProp":
+					{
+						if (DataPropietario.selectedIndex<0){
+							Alert.show("Debe seleccionar un item de la lista.");
+						}else{
+							ListaPropietario.visible = false;
+							ModProp.visible = true;
+							QueryModPropi();
+						}
+						break;
+					}
+					case "BtnEliProp":
+					{
+						if (DataPropietario.selectedIndex<0){
+							Alert.show("Debe seleccionar un item de la lista.");
+						}else{
+							Alert.show("Esta seguro que desea eliminar?", "Propietarios PMGD",mx.controls.Alert.YES | mx.controls.Alert.NO, this, alertClickHandler);
+							
+							function alertClickHandler(evt:CloseEvent):void {
+								if (evt.detail == Alert.YES) {
+									Eliminarpropietario();
+								//	Alert.show(DataPropietario.selectedItem.gra);
+								} else {
+									
+								}
+							}
+								
+						}
+						break;
+					}
+						
+						
+					case "Btnvolver":
+					{
+						ListaPropietario.visible = true;
+						NewProp.visible = false;
+						break;
+					}
+					case "BtnVolverProp":
+					{
+						ListaPropietario.visible = true;
+						ModProp.visible = false;
+						break;
+					}
+						
+						
+					default:
+					{
+						break;
+					}
+				}
+			}
+			
+			public var RutOK:String;
+			public var rt1:String;
+			public var rt2:String;
+			
+			
+			protected function BtnGrabarMod_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				errors = new Array();                          
+				errors = Validator.validateAll(validatorsArrayModProp);                          
+				validaRutMod();     
+				
+				if ((errors.length == 0) && (ValidarRut.ErrorRut == 0)){
+					
+					Alert.show("esta seguro que desea guardar las modificacion?", "Modificacion de Propietarios",mx.controls.Alert.YES | mx.controls.Alert.NO, this, alertClickHandler);
+					
+					function alertClickHandler(evt:CloseEvent):void {
+						if (evt.detail == Alert.YES) {
+							RutPropMod.text =RutOK;
+							ModificarPropietario();
+						} else {
+							LimpiFormPropietario();
+						}
+					}
+				}                          
+				else{                      
+					Alert.show('Por favor complete los campos requeridos.','Revise los campos requeridos.');
+					
+				}
+			}
+			protected function ModificarPropietario():void
+			{
+				var cambiosPropietario:* = new Object;
+				
+				cambiosPropietario["OBJECTID"]= DataPropietario.selectedItem['OBJECTID'];                            
+				cambiosPropietario["PROPIETARIO_PMGD"]=RazPropMod.text;                   
+				cambiosPropietario["SIGLA_PMGD"]=SiglaPropMod.text;
+				cambiosPropietario["RUT_PMGD"]=RutOK;
+				cambiosPropietario["DIRECCION_PROPIETARIO"]=DireccPropMod.text;
+				cambiosPropietario["REPRESENTANTE"]=ReprePropMod.text;
+				cambiosPropietario["TELEFONO"]=FonoPropMod.text;                          
+				cambiosPropietario["EMAIL"]=emailMod.text;
+				
+				
+				var propFeature:FeatureLayer = new FeatureLayer();
+				
+				propFeature.url = "http://gisred.chilquinta/arcgis/rest/services/PMGD/PMGD/FeatureServer/7/applyEdits"
+				
+				var nuevoGraphic:Graphic = new Graphic(null, null, cambiosPropietario);
+				propFeature.applyEdits(null,[nuevoGraphic],null, false,new AsyncResponder(onResult, onFault));
+				
+				function onResult():void
+				{
+					Alert.show("Registro actualizado exitosamente");
+					ListPropietario.queryPropietario();
+					ListaPropietario.visible = true;
+					ModProp.visible = false;
+				}
+				
+				function onFault(info:Object, token:Object = null):void
+				{
+					Alert.show("Error al modificar registro "+info.toString());
+				}
+				
+			}
+			
+			private function validaRutMod():void
+			{ 
+				
+				var vr:widgets.Pmgd.Class.ValidarRut = new ValidarRut;
+				
+				
+				
+				if (RutPropMod.text == "NA")
+				{
+					RutOK = "NA"
+				}
+				else
+				{
+					RutOK = vr.ValidarRut2(RutPropMod.text);
+				}
+				
+			}
+			
+			protected function BtnGrabar_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				errors = new Array();                          
+				errors = Validator.validateAll(validatorsArray);            
+				
+				validaRut();
+				
+				
+				if ((errors.length == 0) && (ValidarRut.ErrorRut == 0)){
+					
+					Alert.show("esta seguro que desea guardar?", "Ingreso de Propietarios",mx.controls.Alert.YES | mx.controls.Alert.NO, this, alertClickHandler);
+					
+					function alertClickHandler(evt:CloseEvent):void {
+						if (evt.detail == Alert.YES) {
+							RutProp.text =RutOK;
+							Grabar_nuevo_propietario();
+						} else {
+							LimpiFormPropietario();
+						}
+					}
+				}                          
+				else{                      
+					Alert.show('Por favor complete los campos requeridos.','Revise los campos requeridos.');
+					
+				}
+			}
+			
+			public var vr:widgets.Pmgd.Class.ValidarRut = new ValidarRut;
+			public function validaRut():void
+			{ 
+				
+				if (RutProp.text == "NA")
+				{
+					RutOK = "NA"
+				}
+				else
+				{
+					RutOK = vr.ValidarRut2(RutProp.text);
+				}
+			}
+			
+			public var MaxValueProp:int= 0;
+			public var max_propietario:int;
+			//graba nuevo propietario
+			protected function Grabar_nuevo_propietario():void
+			{
+				
+				// TODO Auto-generated method stub
+				var queryTask:QueryTask = new QueryTask();
+				queryTask.url = "http://gisred.chilquinta/arcgis/rest/services/PMGD/PMGD/MapServer/7";
+				queryTask.useAMF = false;
+				var query:Query = new Query();
+				query.outFields = ["PROPIETARIO_ID"];
+				query.returnGeometry = false;
+				query.where = "PROPIETARIO_ID=(SELECT MAX(PROPIETARIO_ID) FROM PMGD_PROPIETARIO WHERE EMPRESA_ID=6)";
+				query.orderByFields=["PROPIETARIO_ID"];
+				queryTask.execute(query, new AsyncResponder(onResult, onFault));
+				
+				
+				
+				// add the graphic on the map
+				function onResult(featureSet:FeatureSet, token:Object = null):void
+				{                                       
+					
+					for each (var myGraphic:Graphic in featureSet.features)
+					{
+						MaxValueProp=(myGraphic.attributes['PROPIETARIO_ID']);
+						max_propietario = MaxValueProp + 1;
+						GRABA_PROPIETARIO();                                  
+					}                   
+					
+				}
+				
+				
+				function onFault(info:Object, token:Object = null):void
+				{
+					Alert.show("no se puede cargar tipo sistema "+ info.toString());
+				}      
+			}
+			
+			public var myPropLayer:FeatureLayer = new FeatureLayer;
+			//graba nuevo propietario
+			public function GRABA_PROPIETARIO():void{
+				var nuevoPropietario:* = new Object;
+				Alert.show(String(max_propietario));
+				nuevoPropietario["EMPRESA_ID"]= "006";  
+				nuevoPropietario["PROPIETARIO_ID"]= max_propietario;
+				nuevoPropietario["SIGLA_PMGD"]= SiglaProp.text;
+				nuevoPropietario["RUT_PMGD"]= RutProp.text;
+				nuevoPropietario["DIRECCION_PROPIETARIO"]=DireccProp.text;
+				nuevoPropietario["REPRESENTANTE"]=RepreProp.text;
+				nuevoPropietario["TELEFONO"]=FonoProp.text;
+				nuevoPropietario["EMAIL"]= email.text;
+				nuevoPropietario["PROPIETARIO_PMGD"]= RazProp.text,
+					
+			//	myPropLayer.id = "NewPropFeature";
+				myPropLayer.url = widgets.Pmgd.Url.Url.ServicePropietario;                                  
+				
+				
+				var newgrap:Graphic = new Graphic(null,null,nuevoPropietario);
+				myPropLayer.applyEdits([ newgrap ],null,null,false,new AsyncResponder(onResult1,onFault1));
+				
+				function onResult1():void
+				{
+					Alert.show("Propietario guardado exitosamente");
+					ListaPropietario.visible = true;
+					NewProp.visible = false;
+					ListPropietario.queryPropietario();
+				}
+				
+				function onFault1(info:Object, token:Object = null):void
+				{
+					Alert.show("Error al grabar nuevo propietario "+info.toString());
+				}                   
+			}
+			
+			private function LimpiFormPropietario():void
+			{                          
+				
+				RazProp.text = "";
+				RazProp.errorString = "";
+				SiglaProp.text = "";
+				SiglaProp.errorString = "";
+				RutProp.text = "";
+				RutProp.errorString = "";
+				DireccProp.text = "";
+				DireccProp.errorString = "";
+				RepreProp.text = "";
+				RepreProp.errorString = "";
+				FonoProp.text="";
+				FonoProp.errorString = "";
+				email.text = "";
+				email.errorString = "";
+			}
+			
+			public function QueryModPropi():void
+			{
+				
+				var idGrid:String = DataPropietario.selectedItem['OBJECTID'];
+				// Query to get the cities under the specified state
+				var queryTask:QueryTask = new QueryTask();
+				queryTask.url = "http://gisred.chilquinta/arcgis/rest/services/PMGD/PMGD/FeatureServer/7";
+				queryTask.useAMF = false;
+				var query:Query = new Query();
+				query.outFields = [ "*"];
+				query.returnGeometry = false;
+				query.where = "OBJECTID = " + idGrid ;
+				queryTask.execute(query, new AsyncResponder(onResult, onFault));
+				// add the graphic on the map
+				function onResult( featureSet:FeatureSet, token:Object = null):void
+				{      
+					RazPropMod.text = featureSet.features[0].attributes["PROPIETARIO_PMGD"];
+					SiglaPropMod.text = featureSet.features[0].attributes["SIGLA_PMGD"];
+					
+					rt1 = featureSet.features[0].attributes["RUT_PMGD"];
+					
+					if (rt1 == 'NA')
+					{
+						rt2 = 'NA'
+					}else
+					{
+						if(rt1.length ==12) 
+						{ 
+							var valor1:String = rt1.substring(0,2); 
+							valor1 = valor1;                
+							var valor2:String = rt1.substring(3,rt1.length-6); 
+							valor2 = valor2;                
+							var valor3:String = rt1.substring(7,rt1.length-2); 
+							valor3 = valor3;                
+							var valor4:String = rt1.substring(11); 
+							valor4 = valor4;                
+							rt2  = valor1 + valor2 + valor3 + valor4; 
+							
+							
+						}             
+						else if(rt1.length == 11)
+						{ 
+							var valor5:String = rt1.substring(0,1); 
+							valor5 = valor5;        
+							var valor6:String = rt1.substring(2,rt1.length-6); 
+							valor6 = valor6;      
+							var valor7:String = rt1.substring(6,rt1.length-2); 
+							valor7 = valor7;         
+							var valor8:String = rt1.substring(10); 
+							valor8 = valor8;                
+							rt2 = valor5 + valor6 + valor7 + valor8;  
+							
+						}
+					}
+					
+					RutPropMod.text = rt2;
+					DireccPropMod.text = featureSet.features[0].attributes["DIRECCION_PROPIETARIO"];
+					ReprePropMod.text = featureSet.features[0].attributes["REPRESENTANTE"];
+					FonoPropMod.text = featureSet.features[0].attributes["TELEFONO"];
+					emailMod.text = featureSet.features[0].attributes["EMAIL"];
+					
+					
+					
+				}
+				function onFault(info:Object, token:Object = null):void
+				{
+					Alert.show("Consulta con problemas"+ info.toString());
+				}
+			}
+			
+			protected function DataPropietario_itemClickHandler(event:ListEvent):void
+			{
+				// TODO Auto-generated method stub
+				BtnModProp.enabled=true;
+				BtnEliProp.enabled=true;
+			}
+			
+			public var eventsLayer:FeatureLayer = new FeatureLayer(widgets.Pmgd.Url.Url.ServicePropietario);
+			public function Eliminarpropietario():void
+			{
+				
+				
+				try{
+					const deletes:Array = [DataPropietario.selectedItem.gra];
+					
+					eventsLayer.applyEdits(null,null,deletes,false,new AsyncResponder(featureLayer_editsCompleteHandler, featureLayer_faultHandler));
+					
+					function featureLayer_editsCompleteHandler(featureEditResults:FeatureEditResults, token:Object = null):void
+					{
+						Alert.show("El propietario ha sido borrado exitosamente.") 
+						ListPropietario.queryPropietario();
+						
+					}
+					
+					function featureLayer_faultHandler(event:Fault, token:Object = null):void
+					{
+						Alert.show("Falló al borrar el propietario. Comuníquese con el administrador de GISRED " + event.message)
+					}
+				}
+				catch (error:Error)
+				{
+					Alert.show("Error al proceso de borrado de propietario" + error.toString())
+				}
+			}
+			
+			protected function filterGrid(event:Event):void
+			{
+				/* To get this function to work, only edit variables filterText, columnArray, gridDataProvider, and dataGridName. 
+				Everything else is dynamic. Do not edit variable names. */
+				var filterText:String = StringUtil.trim(txtFilterPropietario.text.toLowerCase()); //Trimmed text String to filter by
+				var columnArray:Array = ['PERIODO_STAR','PROPIETARIO_PMGD','SIGLA_PMGD','RUT_PMGD','DIRECCION_PROPIETARIO','REPRESENTANTE','TELEFONO','EMAIL']; //Datagrid column names to filter on
+				var gridDataProvider:ArrayCollection = ListPropietario.coleccionPropietarios as ArrayCollection; //Name of datagrid's dataprovider. In this case e.g. databases
+				var dataGridName:String = 'DataPropietario'; //Name of the datagrid you are filtering by
+				
+				//Do not edit code past this point
+				var filteredData:Array = [];
+				var added:Boolean=false;
+				var i:int;
+				var j:int;
+				
+				// Loop Through Grid
+				for(i=0; i < gridDataProvider.length; i++){    
+					added = false;
+					
+					//Loop through grid column
+					for(j=0; j<columnArray.length; j++){            
+						if(gridDataProvider[i][columnArray[j]]!=null){
+							
+							//Grab datagrid cell contents, trim it, and convert to lowercase for comparison.
+							var filterString:String = gridDataProvider[i][columnArray[j]].toString().toLowerCase();
+							
+							//Compare the datagrid string(filterString) to the user typed string(filterText).  
+							if(!added){      
+								//If the datagrid string matches the users string, put it into the array.
+								if(filterString.indexOf(filterText) != -1){
+									filteredData.push(gridDataProvider[i]);
+									added = true;
+								} 
+							}else{
+								//Do nothing, break out.
+								break;
+							}
+						}    
+					}
+				}
+				
+				//Set datagrid dataprovider
+				if(filterText.length == 0){
+					this[dataGridName].dataProvider = gridDataProvider; //Display the original unfiltered data
+				}else{
+					this[dataGridName].dataProvider = filteredData; //Pusht he filtered data into the datagrid
+				}
+			}
+			
+			protected function skin1_initializeHandler(event:FlexEvent):void
+			{
+				// TODO Auto-generated method stub
+				txtFilterPropietario.addEventListener(Event.CHANGE, filterGrid);
+			}
+			
+		]]>
+	</fx:Script>
+	
+	
+	<s:VGroup width="100%" top="5" bottom="5" height="100%" visible="true" id="ListaPropietario">
+		<mx:Label id="LblProp" text="Listado de propietarios" fontSize="18"/>
+		<s:HGroup width="100%" verticalAlign="middle">
+			<mx:TextInput x="10" id="txtFilterPropietario" width="100%" height="30" fontSize="14" fontWeight="bold" />
+			<mx:Image x="504" y="10" width="35" height="33"  source="assets/images/lupa_40x40.png"/>
+			<mx:Label id="label1"/>
+		</s:HGroup>
+		<mx:DataGrid id="DataPropietario" resizableColumns="true" sortableColumns="true" editable="false"  
+					 width="100%" height="100%" visible="true" selectable="true" dataProvider="{ListPropietario.coleccionPropietarios}" itemClick="DataPropietario_itemClickHandler(event)">
+			<mx:columns>        
+				<mx:DataGridColumn dataField="OBJECTID" headerText="OBJECTID" width="30" visible="false"/>                                                         
+				<mx:DataGridColumn dataField="PROPIETARIO_PMGD" headerText="Propietario PMGD" width="50"/>
+				<mx:DataGridColumn dataField="SIGLA_PMGD" headerText="Sigla PMGD" width="50" />                                                
+				<mx:DataGridColumn dataField="RUT_PMGD" headerText="Rut PMGD" visible="true" width="50" />
+				<mx:DataGridColumn dataField="DIRECCION_PROPIETARIO" headerText="Direccion" visible="true" width="50" />
+				<mx:DataGridColumn dataField="REPRESENTANTE" headerText="Representante" visible="true" width="50" />
+				<mx:DataGridColumn dataField="TELEFONO" headerText="Telefono" visible="true" width="50" />                                                          
+				<mx:DataGridColumn dataField="EMAIL" headerText="email" visible="true" width="50" />                                                             
+			</mx:columns>
+		</mx:DataGrid> 
+		<mx:HBox>
+			<s:Button id="BtnNewProp" label="Nuevo" click="btnFunction(event)"  />
+			<s:Button id="BtnModProp" label="Modificar" click="btnFunction(event)" enabled="false"/>
+			<s:Button id="BtnEliProp" label="Eliminar" click="btnFunction(event)" enabled="false"/>
+			<s:Label text=""/>
+		</mx:HBox>
+		
+	</s:VGroup>
+	
+	<mx:Canvas id="NewProp"  width="100%" height="100%" visible="false">
+		<mx:Form width="100%" height="100%">
+			<mx:FormHeading label="Complete Todos los campos del formulario."/>                                              
+			
+			<mx:FormItem label="Propietario PMGD">
+				<mx:TextInput id="RazProp" width="200" text="" />
+			</mx:FormItem>
+			
+			<mx:FormItem label="Sigla PMGD">
+				<mx:TextInput id="SiglaProp" width="200"/>
+			</mx:FormItem>
+			
+			<mx:FormItem label="RUT PMGD">
+				<mx:TextInput id="RutProp" width="200" restrict="0-9,k,N,A"/>
+			</mx:FormItem>
+			<mx:FormItem label="Direccion Propietario">
+				<mx:TextInput id="DireccProp" width="200"/>
+			</mx:FormItem>
+			<mx:FormItem label="Representante">
+				<mx:TextInput id="RepreProp" width="200"/>
+			</mx:FormItem>
+			<mx:FormItem label="Teléfono">
+				<mx:TextInput id="FonoProp" width="200"/>
+			</mx:FormItem>                                                                                       
+			<mx:FormItem label="email">
+				<mx:TextInput id="email" width="200"/>
+			</mx:FormItem>                                               
+			<mx:FormItem>
+			</mx:FormItem>
+			<mx:FormItem>
+				<s:HGroup width="200" horizontalAlign="center">
+					<s:Button id="BtnGrabar"  label="Grabar" click="BtnGrabar_clickHandler(event)"/>                                                
+				</s:HGroup>                                                 
+			</mx:FormItem>
+			<s:Button id="Btnvolver" label="Volver" click="btnFunction(event)"/>
+		</mx:Form>                 
+	</mx:Canvas>
+	
+	
+	<!-- ******************************************* MOD PROPIETARIO **************************************************-->
+	<mx:Canvas id="ModProp"  label="etapa" width="100%" height="100%" visible="false">
+		<mx:Form width="100%" height="100%">
+			<mx:FormHeading label="Complete Todos los campos del formulario."/>                                              
+			
+			<mx:FormItem label="Propietario PMGD">
+				<mx:TextInput id="RazPropMod" width="200" text="" />
+			</mx:FormItem>
+			
+			<mx:FormItem label="Sigla PMGD">
+				<mx:TextInput id="SiglaPropMod" width="200"/>
+			</mx:FormItem>
+			
+			<mx:FormItem label="RUT PMGD">
+				<mx:TextInput id="RutPropMod" width="200" restrict="0-9,k,N,A"/>
+			</mx:FormItem>
+			<mx:FormItem label="Direccion Propietario">
+				<mx:TextInput id="DireccPropMod" width="200"/>
+			</mx:FormItem>
+			<mx:FormItem label="Representante">
+				<mx:TextInput id="ReprePropMod" width="200"/>
+			</mx:FormItem>
+			<mx:FormItem label="Teléfono">
+				<mx:TextInput id="FonoPropMod" width="200"/>
+			</mx:FormItem>                                                                                       
+			<mx:FormItem label="email">
+				<mx:TextInput id="emailMod" width="200"/>
+			</mx:FormItem>                                               
+			<mx:FormItem>
+			</mx:FormItem>
+			<mx:FormItem>
+				<s:HGroup width="200" horizontalAlign="center">
+					<s:Button id="BtnGrabarMod"  label="Grabar Modificaciones" click="BtnGrabarMod_clickHandler(event)"/>                                                  
+				</s:HGroup>                                                 
+			</mx:FormItem>
+			<s:Button id="BtnVolverProp" label="Volver" click="btnFunction(event)"/>
+		</mx:Form>                 
+	</mx:Canvas>
+</s:Skin>

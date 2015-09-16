@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Used by MapTips.mxml -->
+<s:Panel xmlns:fx="http://ns.adobe.com/mxml/2009"
+		 xmlns:s="library://ns.adobe.com/flex/spark"
+		 height="150"
+		 alpha="0.8"
+		 backgroundColor="0xEEEEEE"
+		 borderAlpha="0.5"
+		 borderColor="0x000000"
+		 cornerRadius="10"
+		 borderVisible="true"
+		 
+		 
+		 implements="mx.core.IToolTip"
+		 mouseChildren="false"
+		 mouseEnabled="false">
+	
+	<fx:Script>
+		<![CDATA[
+			// required by IToolTip
+			public function get text():String
+			{
+				return null;
+			}
+			
+			public function set text(value:String):void
+			{
+				
+			}
+			
+			/*
+			 *texto+="<span fontWeight='bold'>Rotulo: </span>" + rotulo + "<br/>";
+			texto+="<span fontWeight='bold'>Tipo Conexion: </span>" + tipoConexion+ "<br/>";
+			texto+="<span fontWeight='bold'>Potencia: </span>" + potencia + "<br/>";
+			texto+="<span fontWeight='bold'>Tipo: </span>" +  tipo + "<br/>";
+			texto+="<span fontWeight='bold'>Propiedad: </span>" + propiedad+ "<br/>";
+			texto+="<span fontWeight='bold'>Medido: </span>" + medido + "<br/>"; 
+			*/
+			
+			[Bindable]public var Rotulo:String;
+			[Bindable]public var TipoConexion:String;
+			[Bindable]public var Potencia:String;
+			[Bindable]public var Tipo:String;
+			[Bindable]public var Propiedad:String;
+			[Bindable]public var Medido:String;
+			
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+	
+	</fx:Declarations>
+	
+	<s:Group left="10" right="10" top="10" bottom="10">
+		<s:Label fontSize="12"
+				 horizontalCenter="0"
+				 text="Rotulo:  {(Rotulo)}&#13;Tipo Conexion: {(TipoConexion)}&#13;Potencia: {(Potencia)}&#13;Tipo: {(Tipo)}&#13;Propiedad: {(Propiedad)}&#13;Medido: {(Medido)}"
+				 verticalCenter="0"
+				 fontStyle="normal" />
+		
+	</s:Group>
+	
+</s:Panel>

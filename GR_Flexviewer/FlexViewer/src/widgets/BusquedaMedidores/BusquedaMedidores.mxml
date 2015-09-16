@@ -1,0 +1,258 @@
+<viewer:BaseWidget xmlns:fx="http://ns.adobe.com/mxml/2009"
+				   xmlns:s="library://ns.adobe.com/flex/spark"
+				   xmlns:mx="library://ns.adobe.com/flex/mx"
+				   xmlns:viewer="com.esri.viewer.*"				   
+				   xmlns:components="widgets.BusquedaMedidores.components.*"
+				   xmlns:esri="http://www.esri.com/2008/ags"   
+				   
+				   >	
+	<viewer:states>
+		<s:State name="bkmList"/>
+	</viewer:states>
+	
+	<viewer:transitions>
+		<s:Transition autoReverse="true" toState="*">
+			<s:Fade targets="{[bkmList]}"/>
+		</s:Transition>
+	</viewer:transitions>
+	<fx:Declarations>
+		<s:GlowFilter id="glowFilter"
+					  alpha="1"
+					  color="{getStyle('focusColor')}"
+					  inner="true"
+					  strength="2"/>
+		
+		<s:DateTimeFormatter id="dateFormatter" dateTimePattern="dd/MM/yyyy"/>
+	</fx:Declarations>
+	
+	<fx:Script>
+		<![CDATA[
+			import com.esri.ags.FeatureSet;
+			import com.esri.ags.tasks.QueryTask;
+			import com.esri.ags.tasks.supportClasses.Query;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.events.FlexEvent;
+			import mx.events.ListEvent;
+			import mx.rpc.AsyncResponder;
+			import mx.utils.StringUtil;
+			
+			import spark.events.GridEvent;
+			
+			import widgets.BusquedaMedidores.utilidad.cargarGrids;
+			import widgets.BusquedaMedidores.utilidad.consultaEquipos;
+			import widgets.BusquedaMedidores.utilidad.urls;
+			
+			public var consultasEquipos:consultaEquipos = new consultaEquipos;
+			public var cargarGrid:cargarGrids = new cargarGrids;
+			
+			[Bindable]public var min_opera_f:String;
+			[Bindable]public var min_opera_r:String;
+			[Bindable]public var tie_sgf:String;
+			[Bindable]public var min_sgf:String;
+			
+			
+			
+			
+			protected function bkmList_initializeHandler(event:FlexEvent):void
+			{
+				// cargar listas de filtros de búsqueda
+				cargarGrid.cargarListaAlimentador();
+				
+				cargarGrid.cargarFiltroMedidores();
+				
+				
+				searchBar.dataGrid = dgridEquipos;
+				dgridAlimentador.dataProvider = cargarGrid.arrayAlimentador;
+			//	dgridTipoEquipo.dataProvider = cargarGrid.arrayTipoEquipo;
+				dgridEquipos.dataProvider = cargarGrid.coleccion;
+				
+				//cargarGrid.cargarListaMedidores();
+				
+				//dgridEquipos.dataProvider = cargarGrid.arrayMedidores;
+			}
+			
+					
+			protected function dgridEquipos_gridClickHandler(event:GridEvent):void
+			{
+				// TODO Auto-generated method stub
+				var queryTask:QueryTask = new QueryTask();
+				queryTask.url = widgets.BusquedaMedidores.utilidad.urls.URL_EQUIPOS_DATOS;
+				queryTask.useAMF = false;
+				var query:Query = new Query();
+				query.outFields = ["*"];
+				query.returnGeometry = false;
+				query.where = "ID_EQUIPO ="+ dgridEquipos.selectedItem.id_equipo;
+				queryTask.token = cargarGrids.token as String;
+				queryTask.execute(query, new AsyncResponder(onResult, onFault));
+				
+				// 
+				function onResult(featureSet:FeatureSet, token:Object = null):void
+				{
+					if (featureSet.attributes.length > 0) {
+						min_opera_f = String(featureSet.features[0].attributes["MIN_OPERAC_FAC_A"]);
+						min_opera_r = String(featureSet.features[0].attributes["MIN_OPERAC_RESI_A"]);
+						tie_sgf =  String(featureSet.features[0].attributes["TIEMPO_SGF_SEG"]);
+						min_sgf =  String(featureSet.features[0].attributes["MINIMO_SGF_A"]);
+					}else {
+						MIN_OPERAC_FAC_A.text = "No tiene"; 
+						MIN_OPERAC_RESI_A.text = "No tiene"; 
+						TIEMPO_SGF_SEG.text = "No tiene"; 	
+						MINIMO_SGF_A.text = "No tiene";		
+					}
+					
+					//geoEquipoSelected();
+					
+					
+				}
+				function onFault(info:Object, token:Object = null):void
+				{
+					Alert.show("No se pueden obtener los datos de los medidores.  Contáctese con el administrador de GISRED."+ info.toString());
+				}
+			}
+			
+			
+			
+			protected function verTodos_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				// TODO Auto-generated method stub
+				if (verTodos.selected){
+					dgridEquipos.dataProvider = cargarGrid.coleccionAux;
+					
+					
+					dgridAlimentador.selectedIndex = -1;
+					//dgridTipoEquipo.selectedIndex = -1;
+				}else{
+					return;
+				}
+			}
+			public var selectedItemsDataOT:Array;
+			protected function dgridAlimentador_itemClickHandler(event:ListEvent):void
+			{
+								//Guarda los itemes seleccionados en el arreglo
+				
+				selectedItemsDataOT = dgridAlimentador.selectedItems;
+				
+			}
+			
+			
+			
+			protected function btnBuscarEnGrid_clickHandler(event:MouseEvent):void
+			{
+				
+				cargarGrid.coleccion.filterFunction = filterMyArrayCollection;
+				cargarGrid.coleccion.refresh();
+			}
+			public var itemName:String;
+			public var arrayElementosFiltrados:ArrayCollection;
+			
+			
+			private function filterMyArrayCollection(item:Object):Boolean {
+				
+				for (var i:int = 0; i < dgridAlimentador.selectedItems.length-1; i++)
+				{
+					var nombreAlim:String = dgridAlimentador.selectedItems[i].nombre;
+					var searchString:String =nombreAlim;
+					var itemName:String = (item.alimentador as String);
+					
+					if (itemName.indexOf(searchString) > -1) {
+						
+					}else
+					{
+						
+					}
+				}
+				return itemName.indexOf(searchString);
+				
+			}
+		]]>
+	</fx:Script>
+	<viewer:WidgetTemplate id="wTemplate"                      
+						   width="800" height="500"
+						   visible="true">
+		
+		
+		<s:Group id="bkmList" width="100%" height="100%"
+				 visible="false" visible.bkmList="true" initialize="bkmList_initializeHandler(event)" >
+			<s:VGroup width="100%">
+				<s:HGroup width="100%">
+					<!-- ALIMENTADOR -->	
+				<mx:DataGrid id="dgridAlimentador"
+							 resizableColumns="true" 
+							 sortableColumns="true" 
+							 contentBackgroundAlpha="1"  
+							 width="100%" height="90%" 
+							 visible="true" 
+							 editable="false" 
+							 bottom="1" allowMultipleSelection="true"
+							 itemClick="dgridAlimentador_itemClickHandler(event)">
+					<mx:columns>
+						<mx:DataGridColumn dataField="OBJECTID" headerText="OBJECTID" visible="false"/>
+						<mx:DataGridColumn dataField="id_alimentador" headerText="ID. ALIMENTADOR" visible="false"/>
+						<mx:DataGridColumn dataField="nombre" headerText="Alimentador"/>
+					</mx:columns>
+				</mx:DataGrid>
+					
+				
+					
+					<mx:Form id="formEquipos" width="100%" height="15%">
+						<s:HGroup width="100%">
+							<s:VGroup width="30%">
+								<mx:HBox>
+									<mx:FormItem label="MIN_OPERAC_FAC_A:" fontWeight="bold">
+										<s:Label id="MIN_OPERAC_FAC_A" text="{min_opera_f}" fontWeight="normal" />
+									</mx:FormItem>
+									<mx:FormItem label="MIN_OPERAC_RESI_A" fontWeight="bold">
+										<s:Label id="MIN_OPERAC_RESI_A" text="{min_opera_r}"  fontWeight="normal"/>
+									</mx:FormItem>
+								</mx:HBox>
+								<mx:HBox>
+									<mx:FormItem label="TIEMPO_SGF_SEG" fontWeight="bold">
+										<s:Label id="TIEMPO_SGF_SEG" text="{tie_sgf}" fontWeight="normal" />
+									</mx:FormItem>
+									<mx:FormItem label="MINIMO_SGF_A" fontWeight="bold">
+										<s:Label id="MINIMO_SGF_A" text="{min_sgf}" fontWeight="normal"/>
+									</mx:FormItem>
+								</mx:HBox>
+							</s:VGroup>
+						</s:HGroup>
+					</mx:Form>
+				</s:HGroup>
+				<s:Button id="btnBuscarEnGrid" label="Buscar" click="btnBuscarEnGrid_clickHandler(event)"></s:Button>
+				
+					<s:CheckBox id="verTodos" label="Listar todos los Equipos" click="verTodos_clickHandler(event)"  width="50%"></s:CheckBox>
+					
+					
+				
+				
+				<s:HGroup width="100%" verticalAlign="middle">
+					<components:SearchBar id="searchBar" width="100%"/> 
+					
+				</s:HGroup>
+				<s:DataGrid id="dgridEquipos"
+							resizableColumns="true" 
+							sortableColumns="true" 
+							contentBackgroundAlpha="1"  
+							width="100%" height="30%" 
+							visible="true" 
+							editable="false" 
+							bottom="1"
+							gridClick="dgridEquipos_gridClickHandler(event)"
+							>
+					<s:columns>
+						<s:ArrayList>
+							<s:GridColumn dataField="id_equipo" headerText="ID Equipo"></s:GridColumn>
+							<s:GridColumn dataField="tipo" headerText="TIPO"></s:GridColumn>
+							<s:GridColumn dataField="alimentador" headerText="ALIMENTADOR"></s:GridColumn>
+							
+						</s:ArrayList>
+					</s:columns>
+				</s:DataGrid>
+				
+				
+			</s:VGroup>	
+		</s:Group>
+	</viewer:WidgetTemplate>
+</viewer:BaseWidget>

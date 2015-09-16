@@ -1,0 +1,36 @@
+body {
+height: 100%;
+}
+/*20x70x10*/
+#contenedorHeader{
+  width: 95%;
+  height: 20%;
+ 
+}
+
+#contenedorPaneles{
+   width: 95%;
+  height: 80%;
+}
+
+#contenedorFooter{
+  width: 95%;
+  height: 10%;
+  text-align: center;
+  
+  
+}
+
+#panelLista{
+  padding: 10px;
+  
+}
+
+a.list-group-item:active{
+ 
+  color: #b2b2b2;
+ 
+}
+a.list-group-item:checked{
+  color: #156156;
+}

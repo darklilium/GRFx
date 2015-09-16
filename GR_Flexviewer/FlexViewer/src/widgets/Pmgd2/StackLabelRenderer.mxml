@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Label xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		  xmlns:s="library://ns.adobe.com/flex/spark" 
+		  xmlns:mx="library://ns.adobe.com/flex/mx"
+		  click="dispatchClickEvent()">
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.controls.DataGrid;
+			import mx.controls.dataGridClasses.DataGridColumn;
+			import mx.controls.dataGridClasses.DataGridListData;
+			import mx.core.mx_internal;
+			
+			private function dispatchClickEvent():void
+			{
+				trace("Item Clicked")
+			}
+			
+			import mx.controls.Alert;
+			
+			[Bindable]
+			private var cm:ContextMenu;
+			
+			override protected function createChildren():void
+			{
+				cm = new ContextMenu();
+				cm.hideBuiltInItems();
+				cm.addEventListener(ContextMenuEvent.MENU_SELECT, contextMenu_menuSelect);
+				this.contextMenu = cm;
+			}
+			
+			private function contextMenu_menuSelect(evt:ContextMenuEvent):void {
+				//condition to check length of column data length
+				var allNull:Boolean=true;
+				var columnName:String = DataGridColumn(data).headerText;
+				for each(var o:Object in DataGrid(owner).dataProvider) {
+					if(o[columnName] != "") {
+						allNull=false;
+						break;
+					}
+				}
+				if(!allNull)
+				{
+					var cmi:ContextMenuItem = new ContextMenuItem("First Element...", true);
+					cmi.addEventListener(ContextMenuEvent.MENU_ITEM_SELECT, contextMenuItem_menuItemSelect);
+					cm.customItems = [cmi];
+				}
+			}
+			
+			private function contextMenuItem_menuItemSelect(evt:ContextMenuEvent):void {
+			}
+		]]>
+	</fx:Script>
+</mx:Label>

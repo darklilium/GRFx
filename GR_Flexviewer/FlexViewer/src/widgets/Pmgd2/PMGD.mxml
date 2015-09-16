@@ -1,0 +1,2896 @@
+<?xml version="1.0" encoding="utf-8"?>
+<viewer:BaseWidget xmlns:fx="http://ns.adobe.com/mxml/2009"
+				   xmlns:s="library://ns.adobe.com/flex/spark"
+				   xmlns:mx="library://ns.adobe.com/flex/mx"
+				   xmlns:viewer="com.esri.viewer.*"
+				   xmlns:esri="http://www.esri.com/2008/ags"
+				   xmlns:components="Components.*"
+				   creationComplete="init()" xmlns:components1="com.esri.viewer.components.*">
+	
+	<fx:Declarations>
+		
+		<s:DateTimeFormatter id="dateFormatter" dateTimePattern="dd/MM/yyyy"/>
+	</fx:Declarations>
+	
+	<fx:Script>
+		<![CDATA[
+			import com.esri.ags.FeatureSet;
+			import com.esri.ags.Graphic;
+			import com.esri.ags.SpatialReference;
+			import com.esri.ags.events.MapMouseEvent;
+			import com.esri.ags.geometry.MapPoint;
+			import com.esri.ags.geometry.Polygon;
+			import com.esri.ags.layers.FeatureLayer;
+			import com.esri.ags.layers.supportClasses.FeatureEditResult;
+			import com.esri.ags.layers.supportClasses.FeatureEditResults;
+			import com.esri.ags.symbols.PictureMarkerSymbol;
+			import com.esri.ags.tasks.QueryTask;
+			import com.esri.ags.tasks.supportClasses.Query;
+			
+			import mx.collections.ArrayCollection;
+			import mx.collections.ArrayList;
+			import mx.collections.XMLListCollection;
+			import mx.controls.Alert;
+			import mx.events.CloseEvent;
+			import mx.events.FlexEvent;
+			import mx.events.MenuEvent;
+			import mx.managers.PopUpManager;
+			import mx.rpc.AsyncResponder;
+			import mx.rpc.Fault;
+			import mx.rpc.events.FaultEvent;
+			import mx.utils.StringUtil;
+			import mx.validators.Validator;
+			
+			import spark.components.TitleWindow;
+			import spark.formatters.DateTimeFormatter;
+			
+			import MantenimientoPodas.URLS;
+			
+			
+			
+			
+		
+			public var elementosEncontrados:ArrayList;
+			
+			
+			
+			public var ListYear:ArrayList = new ArrayList;        
+			
+			[Bindable]
+			public var menuBarCollection:XMLListCollection;
+			
+			[Bindable]private var errors:Array;
+			
+			public var myTitleWindow:TitleWindow = new TitleWindow();
+			
+			public var myPropLayer:FeatureLayer = new FeatureLayer;
+			
+			public var MaxValueProp:int= 0;
+			public var max_propietario:int;
+			public var max_central:int;
+			[Bindable]
+			public var RutOK:String;
+			public var rt1:String;
+			public var rt2:String;
+			public var LblCenProID:String;
+			public var LblEtapaProID:String;
+			public var lblEtapaCentralID:String;
+			public var CentralX:String;
+			public var CentralY:String;                    
+			public var clickGraphic:Graphic
+			public var clickLocation:MapPoint
+			public var comunaid:int;
+			public var capInstalada:String;
+			public var alimentadorId:String;
+			public var tensionAlim:String;
+			public var posx:Number;
+			public var posy:Number;
+			public var indice_cen:int;
+			public var largo_cen:int;
+			private var ref:FileReference;
+			private var myBytePDF:ByteArray;
+			
+			public var WinBusPropietario:VentanaBusPropietario = new VentanaBusPropietario();
+			public var WinBusCentral:VentanaBusCentral= new VentanaBusCentral();
+			private var service:String = "http://gisred.chilquinta/arcgis/rest/services/PMGD/PMGD/FeatureServer/7";
+			private var serviceCentral:String = "http://gisred.chilquinta/arcgis/rest/services/PMGD/PMGD/FeatureServer/0";
+			private var serviceEtapa:String = "http://gisred.chilquinta/arcgis/rest/services/PMGD/PMGD/FeatureServer/8";
+			private var servicePdf:String = "http://gisred.chilquinta/arcgis/rest/services/PMGD/PMGD/FeatureServer/8";
+			
+			private var eventsLayer:FeatureLayer = new FeatureLayer(service);
+			private var eventsLayerCentral:FeatureLayer = new FeatureLayer(serviceCentral);
+			private var eventsLayerEtapa:FeatureLayer = new FeatureLayer(serviceEtapa);
+			
+			[Bindable] public var cm1:ContextMenu;
+			[Bindable] public var cm2:ContextMenu;
+			[Bindable] public var cm3:ContextMenu;
+			[Bindable] public var mapPoint:MapPoint;
+			[Bindable] public var mouseMoveMapPoint:MapPoint;
+			
+			[Bindable]
+			public var coleccion:ArrayCollection = new ArrayCollection;
+			public var coleccioncentral:ArrayCollection = new ArrayCollection;
+			[Bindable] public var coleccionEtapaProp:ArrayCollection = new ArrayCollection;
+			[Bindable] public var coleccionEtapaCentral:ArrayCollection = new ArrayCollection;
+			[Bindable] public var coleccionEtapa:ArrayCollection = new ArrayCollection;
+			//     private var dateFormatter:DateTimeFormatter = new DateTimeFormatter;
+			[Bindable] public var objectidPDF:int;
+			
+			
+			//Prompt General
+			[Bindable] public var prompt:String;
+			
+			[Bindable]public var EnerPrim:ArrayList = new ArrayList;
+			[Bindable]
+			public var estado:ArrayList = new ArrayList;
+			[Bindable]public var sistema:ArrayList = new ArrayList;
+			public var featureCentral:FeatureSet;
+			[Bindable]
+			public var DataTipoEtapa:ArrayList =  new ArrayList;
+			
+			private var frPDF:FileReference;
+			//Guarda el bytearray de la foto antes en tiempo de ejecución
+			private var myByteArrayPDF:ByteArray;
+			public var imageAntes : Image = new Image();
+			
+			
+			private var menubarXML:XMLList =
+				<>                                
+					   <menuitem label="Registrar PMGD" >
+							 <menuitem label="Propietario" data="Propietario"/>
+							 <menuitem label="Central" data="Central"/>
+							 <menuitem label="Etapa" data="Etapa"/>
+					   </menuitem>
+					   <menuitem label="Reporte" >
+							 <menuitem label="Reporte 1-A" data="Reporte1"/>                          
+							 <menuitem label="Reporte 2-B" data="Reporte2">                                         
+							 </menuitem>
+					   </menuitem>
+				</>;
+			
+			private var listEmpresaXML:XMLList = 
+				<>
+					   
+				</>
+		 
+		 // Event handler to initialize the MenuBar control.
+			private function initCollections():void
+			{
+				menuBarCollection = new XMLListCollection(menubarXML);
+			}
+			
+			// Event handler for the MenuBar control's itemClick event.
+			private function menuHandler(evt:MenuEvent):void
+			{
+				// Don't open the Alert for a menu bar item that 
+				// opens a popup submenu.                      
+				
+				
+				if (evt.item.@label == "Propietario") {
+					myViewStack.selectedChild = propietario;
+					ModVentanaNormal();
+				}
+				if (evt.item.@label == "Central") {
+					myViewStack.selectedChild = central;
+					ModVentanaNormal();
+					CargaDGCentral();
+				}
+				if (evt.item.@label == "Etapa") {
+					myViewStack.selectedChild = etapa;
+					ModVentanaNormal();
+				}
+				
+			}
+			
+			//Init application
+			private function init():void
+			{
+				initCollections();
+			}
+			
+			
+			
+			
+			//btn Inicio vuelve al menu principal
+			protected function btnInicio_clickHandler(event:MouseEvent):void
+			{
+				myViewStack.selectedChild = inicio;
+				ModVentanaNormal(); // TODO Auto-generated method stub                           
+			}
+			
+			//Valida Rut
+			private function validaRut():void
+			{ 
+				
+				var vr:widgets.Pmgd2.ValidarRut = new ValidarRut;
+				
+				if (RutProp.text == "NA")
+				{
+					RutOK = "NA"
+				}
+				else
+				{
+					RutOK = vr.ValidarRut2(RutProp.text);
+				}
+				
+				
+				
+			}
+			private function validaRutMod():void
+			{ 
+				
+				var vr:widgets.Pmgd2.ValidarRut = new ValidarRut;
+				
+			
+				
+				if (RutPropMod.text == "NA")
+				{
+					RutOK = "NA"
+				}
+				else
+				{
+					RutOK = vr.ValidarRut2(RutPropMod.text);
+				}
+				
+			}
+			
+			
+			//btn volver formulario nuevo propietario
+			protected function Btnvolver_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				myViewStack.selectedChild = propietario;
+				CargaDGPropietario();
+			}
+			//BtnGrabar nuevo propietario
+			protected function BtnGrabar_clickHandler(event:MouseEvent):void
+			{
+				
+				errors = new Array();                          
+				errors = Validator.validateAll(validatorsArray);            
+				
+				validaRut();
+				
+				
+				if ((errors.length == 0) && (ValidarRut.ErrorRut == 0)){
+					
+					Alert.show("esta seguro que desea guardar?", "Ingreso de Propietarios",mx.controls.Alert.YES | mx.controls.Alert.NO, this, alertClickHandler);
+					
+					function alertClickHandler(evt:CloseEvent):void {
+						if (evt.detail == Alert.YES) {
+							RutProp.text =RutOK;
+							Grabar_nuevo_propietario();
+						} else {
+							LimpiFormPropietario();
+						}
+					}
+				}                          
+				else{                      
+					Alert.show('Por favor complete los campos requeridos.','Revise los campos requeridos.');
+					
+				}
+			}
+			
+			
+			//cambia la ventana a new central
+			protected function BtnNewCentral_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub 
+				CboSistema();
+				CBOEstado();
+				cargaCenEnerPrim();
+				myViewStack.selectedChild = NewCentral;                            
+				wTemplate.height = 750;
+				LimpiaFormCentral();
+			}
+			//inicializa cboEstado
+			
+			public function CBOEstado():void{
+				// TODO Auto-generated method stub
+				estado.removeAll();
+				var queryTask:QueryTask = new QueryTask();
+				queryTask.url = "http://gisred.chilquinta/arcgis/rest/services/PMGD/PMGD/MapServer/4";
+				queryTask.useAMF = false;
+				var query:Query = new Query();
+				query.outFields = ["*"];
+				query.returnGeometry = false;
+				query.where = "1 = 1";
+				
+				queryTask.execute(query, new AsyncResponder(onResult, onFault));
+				
+				// add the graphic on the map
+				function onResult(featureSet:FeatureSet, token:Object = null):void
+				{
+					for each (var myGraphic:Graphic in featureSet.features)
+					{                                 
+						
+						estado.addItem({descripcion:myGraphic.attributes['NOMBRE_ESTADO'],id:myGraphic.attributes['ESTADO_ID']});
+						
+					}
+					
+					
+					
+				}
+				function onFault(info:Object, token:Object = null):void
+				{
+					Alert.show("no se puede cargar tipo estado "+ info.toString());
+				}      
+				
+			}
+			
+			//inicializa cbo sistema 
+			public function CboSistema():void
+			{
+				sistema.removeAll();
+				var queryTask:QueryTask = new QueryTask();
+				queryTask.url = "http://gisred.chilquinta/arcgis/rest/services/PMGD/PMGD/MapServer/3";
+				queryTask.useAMF = false;
+				var query:Query = new Query();
+				query.outFields = ["*"];
+				query.returnGeometry = false;
+				query.where = "1 = 1";
+				
+				queryTask.execute(query, new AsyncResponder(onResult, onFault));
+				
+				// add the graphic on the map
+				function onResult(featureSet:FeatureSet, token:Object = null):void
+				{
+					for each (var myGraphic:Graphic in featureSet.features)
+					{						
+						sistema.addItem({descripcion:myGraphic.attributes['NOMBRE_SISTEMA'],id:myGraphic.attributes['SISTEMA_ID']});
+						
+					}                          
+				}
+				function onFault(info:Object, token:Object = null):void
+				{
+					Alert.show("no se puede cargar tipo sistema "+ info.toString());
+				}      
+				
+			}
+			//BtnVolver formulario lista central
+			protected function Btnvolver2_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				myViewStack.selectedChild = central;
+				wTemplate.height = 500;
+				wTemplate.width = 700;
+				CargaDGCentral();
+			}
+			//levanta popup propietarios en vista de central
+			protected function CenPropietario_clickHandler(event:MouseEvent):void
+			{
+				
+				PopUpManager.addPopUp(WinBusPropietario, this, true);
+				PopUpManager.centerPopUp(WinBusPropietario);
+				WinBusPropietario.addEventListener(FocusEvent.FOCUS_OUT,CenCargaProp);
+				
+				
+				function CenCargaProp(event:Event):void
+				{                          
+					CenPropietario.text = Generica.PropWinVar;
+					LblCenProID = Generica.PropIDWinvar;
+					
+					
+				}
+			}
+			//evento de cierre del popup
+			public function closeTitleWindow(event:MouseEvent):void
+			{
+				PopUpManager.removePopUp(myTitleWindow);
+			}                   
+			//carga cbo energia primario
+			public function  cargaCenEnerPrim():void{
+				// TODO Auto-generated method stub
+				EnerPrim.removeAll();
+				var queryTask:QueryTask = new QueryTask();
+				queryTask.url = "http://gisred.chilquinta/arcgis/rest/services/PMGD/PMGD/MapServer/2";
+				queryTask.useAMF = false;
+				var query:Query = new Query();
+				query.outFields = ["*"];
+				query.returnGeometry = false;
+				query.where = "1 = 1";
+				query.orderByFields=["DESCRIPCION"];
+				queryTask.execute(query, new AsyncResponder(onResult, onFault));
+				
+				// add the graphic on the map
+				function onResult(featureSet:FeatureSet, token:Object = null):void
+				{
+					for each (var myGraphic:Graphic in featureSet.features)
+					{
+						
+						EnerPrim.addItem({descripcion:myGraphic.attributes['DESCRIPCION'],id:myGraphic.attributes['TIPO_ENERGETICO_PRIMARIO_ID']});
+					
+						
+					}
+				}
+				function onFault(info:Object, token:Object = null):void
+				{
+					Alert.show("no se puede cargar tipo sistema "+ info.toString());
+				}
+			}
+			//graba nuevo propietario
+			protected function Grabar_nuevo_propietario():void
+			{
+				
+				// TODO Auto-generated method stub
+				var queryTask:QueryTask = new QueryTask();
+				queryTask.url = "http://gisred.chilquinta/arcgis/rest/services/PMGD/PMGD/MapServer/7";
+				queryTask.useAMF = false;
+				var query:Query = new Query();
+				query.outFields = ["PROPIETARIO_ID"];
+				query.returnGeometry = false;
+				query.where = "PROPIETARIO_ID=(SELECT MAX(PROPIETARIO_ID) FROM PMGD_PROPIETARIO WHERE EMPRESA_ID=6)";
+				query.orderByFields=["PROPIETARIO_ID"];
+				queryTask.execute(query, new AsyncResponder(onResult, onFault));
+				
+				
+				
+				// add the graphic on the map
+				function onResult(featureSet:FeatureSet, token:Object = null):void
+				{                                       
+					
+					for each (var myGraphic:Graphic in featureSet.features)
+					{
+						MaxValueProp=(myGraphic.attributes['PROPIETARIO_ID']);
+						max_propietario = MaxValueProp + 1;
+						GRABA_PROPIETARIO();                                  
+					}                   
+					
+				}
+				
+				
+				function onFault(info:Object, token:Object = null):void
+				{
+					Alert.show("no se puede cargar tipo sistema "+ info.toString());
+				}      
+			}
+			//graba nueva central
+			protected function Grabar_nueva_central():void
+			{
+				
+				// TODO Auto-generated method stub
+				var queryTask:QueryTask = new QueryTask();
+				queryTask.url = "http://gisred.chilquinta/arcgis/rest/services/PMGD/PMGD/MapServer/0";
+				queryTask.useAMF = false;
+				var query:Query = new Query();
+				query.outFields = ["CENTRAL_ID"];
+				query.returnGeometry = false;
+				query.where = "CENTRAL_ID=(SELECT MAX(CENTRAL_ID) FROM CENTRAL_PMGD WHERE EMPRESA_ID = 6)";
+				query.orderByFields=["CENTRAL_ID"];
+				queryTask.execute(query, new AsyncResponder(onResult, onFault));
+				
+				
+				
+				// add the graphic on the map
+				function onResult(featureSet:FeatureSet, token:Object = null):void
+				{                                       
+					
+					for each (var myGraphic:Graphic in featureSet.features)
+					{
+						
+						MaxValueProp=(myGraphic.attributes['CENTRAL_ID']);
+						max_central = MaxValueProp + 1;
+						
+					}                   
+					GRABA_CENTRAL();                  
+				}
+				
+				
+				function onFault(info:Object, token:Object = null):void
+				{
+					Alert.show("no se puede cargar tipo sistema "+ info.toString());
+				}      
+			}
+			//graba nuevo propietario
+			protected function GRABA_PROPIETARIO():void{
+				var nuevoPropietario:* = new Object;
+				
+				nuevoPropietario["EMPRESA_ID"]= "006";  
+				nuevoPropietario["PROPIETARIO_ID"]= max_propietario;
+				nuevoPropietario["SIGLA_PMGD"]= SiglaProp.text;
+				nuevoPropietario["RUT_PMGD"]= RutProp.text;
+				nuevoPropietario["DIRECCION_PROPIETARIO"]=DireccProp.text;
+				nuevoPropietario["REPRESENTANTE"]=RepreProp.text;
+				nuevoPropietario["TELEFONO"]=FonoProp.text;
+				nuevoPropietario["EMAIL"]= email.text;
+				nuevoPropietario["PROPIETARIO_PMGD"]= RazProp.text,
+					
+					myPropLayer.id = "NewPropFeature";
+				myPropLayer.url = "http://gisred.chilquinta/arcgis/rest/services/PMGD/PMGD/FeatureServer/7";                                  
+				
+				
+				var newgrap:Graphic = new Graphic(null,null,nuevoPropietario);
+				myPropLayer.applyEdits([ newgrap ],null,null,false,new AsyncResponder(onResult1,onFault1));
+				
+				function onResult1():void
+				{
+					Alert.show("Registro guardado exitosamente");
+				}
+				
+				function onFault1(info:Object, token:Object = null):void
+				{
+					Alert.show("Error al grabar nuevo propietario "+info.toString());
+				}                   
+			}
+			//graba nueva central
+			protected function GRABA_CENTRAL():void{
+				
+				var adds:Array=new Array;
+				var i:int = 0;
+				var nuevaCentral:* = new Object;
+				
+				var CEnSistemaId:int = Censistema.selectedItem.id;
+				var CenTipoenerID:int = CenEnerPrim.selectedItem.id;
+				var CenTipoEstadoID:int = CenEstado.selectedItem.id;                            
+				var potInstalada:Number = Number(CenPotencia.text);
+				var NomEnerge:String = CenEnerPrim.selectedItem.descripcion;
+				var NomEstado:String = CenEstado.selectedItem.descripcion;
+				var NomSistema:String = Censistema.selectedItem.descripcion;
+				
+				nuevaCentral["EMPRESA_ID"]= "006";                                 
+				nuevaCentral["CENTRAL_ID"]= max_central;
+				nuevaCentral["FECHA_RECEPCION"]= CenFechaRecepcion.text;
+				nuevaCentral["NOMBRE_CENTRAL"]= CenNomCentral.text;
+				nuevaCentral["DIRECCION_CENTRAL"]=CenDirCentral.text;
+				nuevaCentral["COMUNA_ID"]=comunaid;                                
+				nuevaCentral["SISTEMA_ID"]=CEnSistemaId;
+				nuevaCentral["POTENCIA_INSTALADA"]= potInstalada;
+				nuevaCentral["NIVEL_TENSION"]= Number(CenTension.text);
+				nuevaCentral["TIPO_ENERGETICO_PRIMARIO_ID"]= CenTipoenerID;
+				nuevaCentral["ALIMENTADOR_ID"]= Number(alimentadorId);
+				nuevaCentral["PUNTO_CONEXION"]= CenPtoConexion.text;
+				nuevaCentral["NUMERO_UNIDADES"]= CenUnidades.text;
+				nuevaCentral["FECHA_PUESTA_SERVICIO"]= CenFechaPuestaServ.text;
+				nuevaCentral["ESTADO_ID"]= CenTipoEstadoID;
+				nuevaCentral["PROPIETARIO_ID"]= LblCenProID;
+				nuevaCentral["X"]= posx;
+				nuevaCentral["Y"]= posy;
+				nuevaCentral["CAPACIDAD_INSTALADA"]= Number(CenCapacidad.text);
+				nuevaCentral["NOMBRE_ALIMENTADOR"]= CenAlimentador.text;
+				nuevaCentral["NOMBRE_TIPO_ENERGETICO"]= NomEnerge;
+				nuevaCentral["NOMBRE_ESTADO"]= NomEstado;
+				nuevaCentral["NOMBRE_PROPIETARIO"]= CenPropietario.text;
+				nuevaCentral["NOMBRE_COMUNA"]=CenComuna.text;
+				nuevaCentral["NOMBRE_SISTEMA"]=NomSistema;
+				
+				myPropLayer.url = "http://gisred.chilquinta/arcgis/rest/services/PMGD/PMGD/FeatureServer/0";       
+				
+				//     var graficoEditadoActual:Graphic=new Graphic(new MapPoint(),null,nuevaCentral);102100
+				var graficoEditadoActual:Graphic=new Graphic(new MapPoint(posx, posy,new SpatialReference(3857)),null,nuevaCentral);
+				adds[0]=graficoEditadoActual;    
+				
+				myPropLayer.applyEdits(adds,null,null, false,new AsyncResponder(onResult, onFault));
+				
+				function onResult():void
+				{
+					Alert.show("Central agregada");
+					map.defaultGraphicsLayer.remove(clickGraphic);
+					myPropLayer.refresh();
+				}
+				
+				function onFault(info:Object, token:Object = null):void
+				{
+					Alert.show("Error al editar nuevo elemento "+info.toString());
+				}
+				
+			}
+			
+			public function QueryPropietario():void
+			{
+				var queryTask:QueryTask = new QueryTask(service);
+				var query:Query = new Query();
+				query.where = "EMPRESA_ID = 6";
+				query.outFields = ['*'];
+				query.returnGeometry = true;
+				queryTask.execute(query, new AsyncResponder(onResultQuery, onFaultQuery));
+				
+				var arrProp:Array = new Array;
+				
+				function onResultQuery(featureSet:FeatureSet, token:Object = null):void
+				{      
+					var k:int;
+					coleccion.removeAll();
+					for(k=0;k<featureSet.features.length;k++)
+					{
+						var recordGraphic:Graphic = featureSet.features[k];
+						coleccion.addItem({OBJECTID:recordGraphic.attributes["OBJECTID"], 
+							PERIODO_STAR:recordGraphic.attributes["PERIODO_STAR"],
+							PROPIETARIO_ID:recordGraphic.attributes["PROPIETARIO_ID"], 
+							PROPIETARIO_PMGD:recordGraphic.attributes["PROPIETARIO_PMGD"],
+							SIGLA_PMGD:recordGraphic.attributes["SIGLA_PMGD"],
+							RUT_PMGD:recordGraphic.attributes["RUT_PMGD"],
+							DIRECCION_PROPIETARIO:recordGraphic.attributes["DIRECCION_PROPIETARIO"],
+							REPRESENTANTE:recordGraphic.attributes["REPRESENTANTE"],
+							TELEFONO:recordGraphic.attributes["TELEFONO"],
+							EMAIL:recordGraphic.attributes["EMAIL"],
+							gra:recordGraphic });
+					}
+					//esta asociacion da error al iniciar: da null al comienzo.
+					DataPropietario.dataProvider = coleccion;
+					
+					
+					
+				}
+				function onFaultQuery(info:Object, token:Object = null):void
+				{   
+					Alert.show("Error en consulta","Carga de propietarios");
+				}
+			}
+			public function QueryCentral():void
+			{
+				
+				var queryTask:QueryTask = new QueryTask(serviceCentral);
+				var query:Query = new Query();
+				query.where = "1=1";
+				query.outFields = ['*'];
+				query.returnGeometry = true;
+				queryTask.execute(query, new AsyncResponder(onResultQuery, onFaultQuery));
+				
+				var arrProp:Array = new Array;
+				
+				function onResultQuery(featureSet:FeatureSet, token:Object = null):void
+				{
+					
+					featureCentral = featureSet;
+					
+					//coleccion.addAll(new ArrayCollection(featureSet.attributes));
+					//DataPropietario.dataProvider = coleccion;
+					
+					//var ac:ArrayCollection = new ArrayCollection();
+					var k:int;
+					coleccioncentral.removeAll();
+					for(k=0;k<featureSet.features.length;k++)
+					{
+						
+						var recordGraphic:Graphic = featureSet.features[k];
+						coleccioncentral.addItem({OBJECTID:recordGraphic.attributes["OBJECTID"], 
+							EMPRESA_ID:recordGraphic.attributes["EMPRESA_ID"], 
+							PERIODO_STAR:recordGraphic.attributes["PERIODO_STAR"],
+							CENTRAL_ID:recordGraphic.attributes["CENTRAL_ID"],
+							FECHA_RECEPCION:recordGraphic.attributes["FECHA_RECEPCION"],
+							NOMBRE_CENTRAL:recordGraphic.attributes["NOMBRE_CENTRAL"],
+							DIRECCION_CENTRAL:recordGraphic.attributes["DIRECCION_CENTRAL"],
+							COMUNA_ID:recordGraphic.attributes["COMUNA_ID"],
+							SISTEMA_ID:recordGraphic.attributes["SISTEMA_ID"],
+							POTENCIA_INSTALADA:recordGraphic.attributes["POTENCIA_INSTALADA"],
+							NIVEL_TENSION:recordGraphic.attributes["NIVEL_TENSION"],
+							TIPO_ENERGETICO_PRIMARIO_ID:recordGraphic.attributes["TIPO_ENERGETICO_PRIMARIO_ID"],
+							ALIMENTADOR_ID:recordGraphic.attributes["ALIMENTADOR_ID"],
+							PUNTO_CONEXION:recordGraphic.attributes["PUNTO_CONEXION"],
+							NUMERO_UNIDADES:recordGraphic.attributes["NUMERO_UNIDADES"],
+							FECHA_PUESTA_SERVICIO:recordGraphic.attributes["FECHA_PUESTA_SERVICIO"],
+							ESTADO_ID:recordGraphic.attributes["ESTADO_ID "],
+							PROPIETARIO_ID:recordGraphic.attributes["PROPIETARIO_ID"],
+							CAPACIDAD_INSTALADA:recordGraphic.attributes["CAPACIDAD_INSTALADA"],
+							NOMBRE_ESTADO:recordGraphic.attributes["NOMBRE_ESTADO"],
+							NOMBRE_ALIMENTADOR:recordGraphic.attributes["NOMBRE_ALIMENTADOR"],
+							NOMBRE_TIPO_ENERGETICO:recordGraphic.attributes["NOMBRE_TIPO_ENERGETICO"],
+							NOMBRE_PROPIETARIO:recordGraphic.attributes["NOMBRE_PROPIETARIO"],
+							gra:recordGraphic });
+					}
+					DataCentral.dataProvider = coleccioncentral;
+					
+				}
+				function onFaultQuery(info:Object, token:Object = null):void
+				{   
+					Alert.show("Error en consulta","Carga de Centrales");
+				}
+			}
+			
+			
+			
+			protected function CargaDGPropietario():void{
+				coleccion.removeAll();
+				txtFilterPropietario.addEventListener(Event.CHANGE, filterGrid);
+				/*----------------------------*/
+				CreaMenuContext();
+				QueryPropietario();
+			}
+			
+			protected function propietario_initializeHandler(event:FlexEvent):void
+			{
+				// TODO Auto-generated method stub
+				CargaDGPropietario();
+				
+			}
+			
+			protected function filterGrid(event:Event):void
+			{
+				/* To get this function to work, only edit variables filterText, columnArray, gridDataProvider, and dataGridName. 
+				Everything else is dynamic. Do not edit variable names. */
+				var filterText:String = StringUtil.trim(txtFilterPropietario.text.toLowerCase()); //Trimmed text String to filter by
+				var columnArray:Array = ['PERIODO_STAR','PROPIETARIO_PMGD','SIGLA_PMGD','RUT_PMGD','DIRECCION_PROPIETARIO','REPRESENTANTE','TELEFONO','EMAIL']; //Datagrid column names to filter on
+				var gridDataProvider:ArrayCollection = this.coleccion as ArrayCollection; //Name of datagrid's dataprovider. In this case e.g. databases
+				var dataGridName:String = 'DataPropietario'; //Name of the datagrid you are filtering by
+				
+				//Do not edit code past this point
+				var filteredData:Array = [];
+				var added:Boolean=false;
+				var i:int;
+				var j:int;
+				
+				// Loop Through Grid
+				for(i=0; i < gridDataProvider.length; i++){    
+					added = false;
+					
+					//Loop through grid column
+					for(j=0; j<columnArray.length; j++){            
+						if(gridDataProvider[i][columnArray[j]]!=null){
+							
+							//Grab datagrid cell contents, trim it, and convert to lowercase for comparison.
+							var filterString:String = gridDataProvider[i][columnArray[j]].toString().toLowerCase();
+							
+							//Compare the datagrid string(filterString) to the user typed string(filterText).  
+							if(!added){      
+								//If the datagrid string matches the users string, put it into the array.
+								if(filterString.indexOf(filterText) != -1){
+									filteredData.push(gridDataProvider[i]);
+									added = true;
+								} 
+							}else{
+								//Do nothing, break out.
+								break;
+							}
+						}    
+					}
+				}
+				
+				//Set datagrid dataprovider
+				if(filterText.length == 0){
+					this[dataGridName].dataProvider = gridDataProvider; //Display the original unfiltered data
+				}else{
+					this[dataGridName].dataProvider = filteredData; //Pusht he filtered data into the datagrid
+				}
+			}
+			
+			protected function filterGridCentral(event:Event):void
+			{
+				/* To get this function to work, only edit variables filterText, columnArray, gridDataProvider, and dataGridName. 
+				Everything else is dynamic. Do not edit variable names. */
+				var filterText:String = StringUtil.trim(txtFilterCentral.text.toLowerCase()); //Trimmed text String to filter by
+				var columnArray:Array = ['PERIODO_STAR','CENTRAL_ID','FECHA_RECEPCION','NOMBRE_CENTRAL','DIRECCION_CENTRAL','COMUNA_ID','SISTEMA_ID','POTENCIA_INSTALADA','NIVEL_TENSION','TIPO_ENERGETICO_PRIMARIO_ID','ALIMENTADOR_ID','PUNTO_CONEXION','NUMERO_UNIDADES','PROPIETARIO_ID','CAPACIDAD_INSTALADA', 'NOMBRE_ALIMENTADOR','NOMBRE_TIPO_ENERGETICO','NOMBRE_ESTADO','NOMBRE_PROPIETARIO']; //Datagrid column names to filter on
+				var gridDataProvider:ArrayCollection = this.coleccioncentral as ArrayCollection; //Name of datagrid's dataprovider. In this case e.g. databases
+				var dataGridName:String = 'DataCentral'; //Name of the datagrid you are filtering by
+				
+				//Do not edit code past this point
+				var filteredData:Array = [];
+				var added:Boolean=false;
+				var i:int;
+				var j:int;
+				
+				// Loop Through Grid
+				for(i=0; i < gridDataProvider.length; i++){    
+					added = false;
+					
+					//Loop through grid column
+					for(j=0; j<columnArray.length; j++){            
+						if(gridDataProvider[i][columnArray[j]]!=null){
+							
+							//Grab datagrid cell contents, trim it, and convert to lowercase for comparison.
+							var filterString:String = gridDataProvider[i][columnArray[j]].toString().toLowerCase();
+							
+							//Compare the datagrid string(filterString) to the user typed string(filterText).  
+							if(!added){      
+								//If the datagrid string matches the users string, put it into the array.
+								if(filterString.indexOf(filterText) != -1){
+									filteredData.push(gridDataProvider[i]);
+									added = true;
+								} 
+							}else{
+								//Do nothing, break out.
+								break;
+							}
+						}    
+					}
+				}
+				
+				//Set datagrid dataprovider
+				if(filterText.length == 0){
+					this[dataGridName].dataProvider = gridDataProvider; //Display the original unfiltered data
+				}else{
+					this[dataGridName].dataProvider = filteredData; //Pusht he filtered data into the datagrid
+				}
+			}
+			protected function filterGridEtapaProp(event:Event):void
+			{
+				/* To get this function to work, only edit variables filterText, columnArray, gridDataProvider, and dataGridName. 
+				Everything else is dynamic. Do not edit variable names. */
+				var filterText:String = StringUtil.trim(txtFilterEtaPropietario.text.toLowerCase()); //Trimmed text String to filter by
+				var columnArray:Array = ['PROPIETARIO_PMGD']; //Datagrid column names to filter on
+				var gridDataProvider:ArrayCollection = this.coleccion as ArrayCollection; //Name of datagrid's dataprovider. In this case e.g. databases
+				var dataGridName:String = 'DGEtapaPorpietario'; //Name of the datagrid you are filtering by
+				
+				//Do not edit code past this point
+				var filteredData:Array = [];
+				var added:Boolean=false;
+				var i:int;
+				var j:int;
+				
+				// Loop Through Grid
+				for(i=0; i < gridDataProvider.length; i++){    
+					added = false;
+					
+					//Loop through grid column
+					for(j=0; j<columnArray.length; j++){            
+						if(gridDataProvider[i][columnArray[j]]!=null){
+							
+							//Grab datagrid cell contents, trim it, and convert to lowercase for comparison.
+							var filterString:String = gridDataProvider[i][columnArray[j]].toString().toLowerCase();
+							
+							//Compare the datagrid string(filterString) to the user typed string(filterText).  
+							if(!added){      
+								//If the datagrid string matches the users string, put it into the array.
+								if(filterString.indexOf(filterText) != -1){
+									filteredData.push(gridDataProvider[i]);
+									added = true;
+								} 
+							}else{
+								//Do nothing, break out.
+								break;
+							}
+						}    
+					}
+				}
+				
+				//Set datagrid dataprovider
+				if(filterText.length == 0){
+					this[dataGridName].dataProvider = gridDataProvider; //Display the original unfiltered data
+				}else{
+					this[dataGridName].dataProvider = filteredData; //Pusht he filtered data into the datagrid
+				}
+			}
+			
+			private function LimpiFormPropietario():void
+			{                          
+				
+				RazProp.text = "";
+				RazProp.errorString = "";
+				SiglaProp.text = "";
+				SiglaProp.errorString = "";
+				RutProp.text = "";
+				RutProp.errorString = "";
+				DireccProp.text = "";
+				DireccProp.errorString = "";
+				RepreProp.text = "";
+				RepreProp.errorString = "";
+				FonoProp.text="";
+				FonoProp.errorString = "";
+				email.text = "";
+				email.errorString = "";
+			}
+			private function LimpiaFormCentral():void
+			{
+				
+				CenFechaRecepcion.selectedItem ="";
+				CenFechaRecepcion.errorString = "";
+				CenNomCentral.text = "";
+				CenNomCentral.errorString = "";
+				CenDirCentral.text = "";
+				CenDirCentral.errorString = "";
+				CenComuna.text = "";
+				CenComuna.errorString = "";
+				Censistema.selectedIndex = -1;
+				Censistema.errorString = "";
+				CenPotencia.text = "";
+				CenPotencia.errorString = "";
+				CenCapacidad.text = "";
+				CenCapacidad.errorString = "";
+				CenTension.text = "";
+				CenTension.errorString = "";
+				CenEnerPrim.selectedIndex = -1;
+				CenEnerPrim.errorString = "";
+				CenAlimentador.text ="";
+				CenAlimentador.errorString = "";
+				CenPtoConexion.text = "";
+				CenPtoConexion.errorString = "";
+				CenUnidades.text = "";
+				CenUnidades.errorString = "";
+				CenEstado.selectedIndex = -1;
+				CenEstado.errorString = "";
+				CenPropietario.text = "";
+				CenPropietario.errorString = "";
+				lblCoordx.text = "0";
+				lblCoordy.text ="0";
+				CenFechaPuestaServ.selectedItem ="";
+				CenFechaPuestaServ.errorString = "";
+				
+				
+				
+			}
+			
+			private function ContextEliminarPropietario(e:ContextMenuEvent):void
+			{            
+				Alert.show("Esta seguro que desea eliminar?", "Propietarios PMGD",mx.controls.Alert.YES | mx.controls.Alert.NO, this, alertClickHandler);
+				
+				function alertClickHandler(evt:CloseEvent):void {
+					if (evt.detail == Alert.YES) {
+						//Eliminarpropietario();
+						Alert.show(DataPropietario.selectedItem.gra);
+					} else {
+						
+					}
+				}
+			}
+			//ejecuta context modificar central
+			private function ContexModificarCentral(e:ContextMenuEvent):void
+			{      
+				//cARGA COMBOS ANTES DE CAMBIAR LA VENTANA
+				cargaCenEnerPrim();
+				CboSistema();
+				CBOEstado();  
+				
+				
+				QueryModCentral();
+				
+				myViewStack.selectedChild = ModCentral; 
+				
+				
+			}
+			
+			private function ContexModificarEtapa(e:ContextMenuEvent):void
+			{      
+				
+				//     Alert.show(DGEtapa.selectedItem.ETAPA_ID);
+				//     DDLEtaTipoEtapaMod.selectedIndex = obtenerid(DataTipoEtapa, DGEtapa.selectedItem['ETAPA_ID']);
+				queryCargaModEtapa();
+				myViewStack.selectedChild = ModEtapa;          
+				
+				
+				/*DDLEtaTipoEtapaMod
+				EtaFechaRecepcionMod
+				CenEstadoEtapaMod
+				BtnAdjuntarPDFMod
+				LblNomPDFMod*/
+			}
+			
+			public function queryCargaModEtapa():void {
+				
+				var idGrid:String = DGEtapa.selectedItem['OBJECTID'];
+				// Query to get the cities under the specified state
+				var queryTask:QueryTask = new QueryTask();
+				queryTask.url = "http://gisred.chilquinta/arcgis/rest/services/PMGD/PMGD/MapServer/8/query";
+				queryTask.useAMF = false;
+				var query:Query = new Query();
+				query.outFields = ["*"];
+				query.returnGeometry = false;
+				query.where = "OBJECTID = " + idGrid ;
+				queryTask.execute(query, new AsyncResponder(onResult, onFault));
+				// add the graphic on the map
+				function onResult(featureSet:FeatureSet, token:Object = null):void
+				{
+					var dateFormatStr:String =  "dd/MM/yyyy";
+					
+					DDLEtaTipoEtapaMod.selectedIndex = obtenerid(DataTipoEtapa,featureSet.features[0].attributes["NOM_ETAPA"]);
+					EtaFechaRecepcionMod.text = msToDate(featureSet.features[0].attributes["FECHA_RECEPCION"],dateFormatStr, true);
+					CenEstadoEtapaMod.selectedIndex =  obtenerid(estado,featureSet.features[0].attributes["NOM_ESTADO"]);
+					Generica.EtapaIdMod = featureSet.features[0].attributes['OBJECTID'];
+					Generica.EtapaIdModCentral =  featureSet.features[0].attributes['CENTRAL_ID'];
+					Generica.EtapaIdModProp = featureSet.features[0].attributes['PROPIETARIO_ID'];
+					obtenerNombrePDF(DGEtapa.selectedItem['OBJECTID']);
+					
+				}
+				function onFault(info:Object, token:Object = null):void
+				{
+					Alert.show("No se pudo obtener el resultado de la consulta para modificar la etapa.");
+				}
+				
+				
+			}
+			public function obtenerNombrePDF(objid:Number):void{
+				
+				var myDetalle:FeatureLayer = new FeatureLayer("http://gisred.chilquinta/arcgis/rest/services/PMGD/PMGD/MapServer/8");
+				myDetalle.queryAttachmentInfos(objid,new AsyncResponder(onResult1,onFault1)); 
+				
+				
+				function onResult1(event:Array, token:Object=null):void{  
+					//tiene attachment
+					if (event.length>0) 
+					{
+						Generica.EtapaNomPDF = event[0].name;
+						Generica.EtapaObPDFId = event[0].id;  
+					}
+						//no tiene attachment
+					else  
+					{
+						Generica.EtapaNomPDF = "PDF NO EXISTE";
+						Generica.EtapaObPDFId = 0;
+					}
+					
+					
+					
+				}
+				function onFault1(event:Object,token:Object=null):void{
+					Alert.show("No se pudo conectar al servicio que aloja los pdf. Contáctese con el administrador de GISRED.");
+				}      
+				
+				
+			}
+			private function ContextEliminarCentral(e:ContextMenuEvent):void
+			{      
+				Alert.show("Esta seguro que desea eliminar?", "Propietarios PMGD",mx.controls.Alert.YES | mx.controls.Alert.NO, this, alertClickHandler);
+				
+				function alertClickHandler(evt:CloseEvent):void {
+					if (evt.detail == Alert.YES) {
+						EliminarCentral();                             
+					} else {
+						
+					}
+				}
+				
+			}
+			
+			private function ContextEliminarEtapa(e:ContextMenuEvent):void
+			{      
+				Alert.show("Esta seguro que desea eliminar?", "Etapas PMGD",mx.controls.Alert.YES | mx.controls.Alert.NO, this, alertClickHandler);
+				
+				function alertClickHandler(evt:CloseEvent):void {
+					if (evt.detail == Alert.YES) {
+						EliminarEtapa();                               
+					} else {
+						
+					}
+				}
+				
+			}
+			
+			private function ContexModificarPropietario(e:ContextMenuEvent):void
+			{
+				
+				QueryModPropi();
+				myViewStack.selectedChild = ModProp;                  
+				//LimpiFormPropietario();
+			}
+			
+			
+			protected function CreaMenuContext():void
+			{
+				
+				var cm:ContextMenu = new ContextMenu();
+				cm.hideBuiltInItems();
+				
+				var item1:ContextMenuItem = new ContextMenuItem("Borrar..");                     
+				var item2:ContextMenuItem = new ContextMenuItem("Modificar..");
+				
+				
+				
+				cm.customItems.push(item1);
+				cm.customItems.push(item2);
+				
+				//     this.contextMenu = cm;
+				
+				DataPropietario.contextMenu= cm;
+				
+				item1.addEventListener(ContextMenuEvent.MENU_ITEM_SELECT,ContextEliminarPropietario);
+				item2.addEventListener(ContextMenuEvent.MENU_ITEM_SELECT,ContexModificarPropietario);
+			}      
+			protected function CreaMenuContextCentral():void
+			{
+				
+				var cmCentral:ContextMenu = new ContextMenu();
+				cmCentral.hideBuiltInItems();
+				
+				var item1:ContextMenuItem = new ContextMenuItem("Borrar..");                     
+				var item2:ContextMenuItem = new ContextMenuItem("Modificar..");
+				var item3:ContextMenuItem = new ContextMenuItem("Go to..");
+				
+				
+				cmCentral.customItems.push(item1);
+				cmCentral.customItems.push(item2);
+				cmCentral.customItems.push(item3);
+				
+				
+				DataCentral.contextMenu= cmCentral;
+				
+				item1.addEventListener(ContextMenuEvent.MENU_ITEM_SELECT,ContextEliminarCentral);
+				item2.addEventListener(ContextMenuEvent.MENU_ITEM_SELECT,ContexModificarCentral);
+				item3.addEventListener(ContextMenuEvent.MENU_ITEM_SELECT,ContexGotoCentral);
+			}      
+			
+			protected function CreaMenuContextEtapa():void
+			{
+				
+				var cmEtapa:ContextMenu = new ContextMenu();
+				cmEtapa.hideBuiltInItems();
+				
+				var item1:ContextMenuItem = new ContextMenuItem("Borrar..");                     
+				var item2:ContextMenuItem = new ContextMenuItem("Modificar..");
+				
+				cmEtapa.customItems.push(item1);
+				cmEtapa.customItems.push(item2);
+				
+				
+				DGEtapa.contextMenu= cmEtapa;
+				
+				item1.addEventListener(ContextMenuEvent.MENU_ITEM_SELECT,ContextEliminarEtapa);
+				item2.addEventListener(ContextMenuEvent.MENU_ITEM_SELECT,ContexModificarEtapa);
+				
+			}                   
+			
+			protected function QueryModPropi():void
+			{
+				
+				var idGrid:String = DataPropietario.selectedItem['OBJECTID'];
+				// Query to get the cities under the specified state
+				var queryTask:QueryTask = new QueryTask();
+				queryTask.url = "http://gisred.chilquinta/arcgis/rest/services/PMGD/PMGD/FeatureServer/7";
+				queryTask.useAMF = false;
+				var query:Query = new Query();
+				query.outFields = [ "*"];
+				query.returnGeometry = false;
+				query.where = "OBJECTID = " + idGrid ;
+				queryTask.execute(query, new AsyncResponder(onResult, onFault));
+				// add the graphic on the map
+				function onResult( featureSet:FeatureSet, token:Object = null):void
+				{      
+					RazPropMod.text = featureSet.features[0].attributes["PROPIETARIO_PMGD"];
+					SiglaPropMod.text = featureSet.features[0].attributes["SIGLA_PMGD"];
+					
+					rt1 = featureSet.features[0].attributes["RUT_PMGD"];
+					
+					if (rt1 == 'NA')
+					{
+						rt2 = 'NA'
+					}else
+					{
+						if(rt1.length ==12) 
+						{ 
+							var valor1:String = rt1.substring(0,2); 
+							valor1 = valor1;                
+							var valor2:String = rt1.substring(3,rt1.length-6); 
+							valor2 = valor2;                
+							var valor3:String = rt1.substring(7,rt1.length-2); 
+							valor3 = valor3;                
+							var valor4:String = rt1.substring(11); 
+							valor4 = valor4;                
+							rt2  = valor1 + valor2 + valor3 + valor4; 
+							
+							
+						}             
+						else if(rt1.length == 11)
+						{ 
+							var valor5:String = rt1.substring(0,1); 
+							valor5 = valor5;        
+							var valor6:String = rt1.substring(2,rt1.length-6); 
+							valor6 = valor6;      
+							var valor7:String = rt1.substring(6,rt1.length-2); 
+							valor7 = valor7;         
+							var valor8:String = rt1.substring(10); 
+							valor8 = valor8;                
+							rt2 = valor5 + valor6 + valor7 + valor8;  
+							
+						}
+					}
+					
+					RutPropMod.text = rt2;
+					DireccPropMod.text = featureSet.features[0].attributes["DIRECCION_PROPIETARIO"];
+					ReprePropMod.text = featureSet.features[0].attributes["REPRESENTANTE"];
+					FonoPropMod.text = featureSet.features[0].attributes["TELEFONO"];
+					emailMod.text = featureSet.features[0].attributes["EMAIL"];
+					
+					
+					
+				}
+				function onFault(info:Object, token:Object = null):void
+				{
+					Alert.show("Consulta con problemas"+ info.toString());
+				}
+			}
+			
+			protected function ModificarPropietario():void
+			{
+				var cambiosPropietario:* = new Object;
+				
+				cambiosPropietario["OBJECTID"]= DataPropietario.selectedItem['OBJECTID'];                            
+				cambiosPropietario["PROPIETARIO_PMGD"]=RazPropMod.text;                   
+				cambiosPropietario["SIGLA_PMGD"]=SiglaPropMod.text;
+				cambiosPropietario["RUT_PMGD"]=RutOK;
+				cambiosPropietario["DIRECCION_PROPIETARIO"]=DireccPropMod.text;
+				cambiosPropietario["REPRESENTANTE"]=ReprePropMod.text;
+				cambiosPropietario["TELEFONO"]=FonoPropMod.text;                          
+				cambiosPropietario["EMAIL"]=emailMod.text;
+				
+				
+				var propFeature:FeatureLayer = new FeatureLayer();
+				
+				propFeature.url = "http://gisred.chilquinta/arcgis/rest/services/PMGD/PMGD/FeatureServer/7/applyEdits"
+				
+				var nuevoGraphic:Graphic = new Graphic(null, null, cambiosPropietario);
+				propFeature.applyEdits(null,[nuevoGraphic],null, false,new AsyncResponder(onResult, onFault));
+				
+				function onResult():void
+				{
+					Alert.show("Registro actualizado exitosamente");
+				}
+				
+				function onFault(info:Object, token:Object = null):void
+				{
+					Alert.show("Error al modificar registro "+info.toString());
+				}
+				
+			}
+			
+			protected function BtnModificar_clickHandler(event:MouseEvent):void
+			{
+				errors = new Array();
+				
+				errors = Validator.validateAll(validatorsArray);
+				
+				validaRut(); 
+				
+				if ((errors.length == 0) && (ValidarRut.ErrorRut == 0)){
+					
+					Alert.show("¿Está seguro que desea guardar?", "Modificación de Propietarios",mx.controls.Alert.YES | mx.controls.Alert.NO, this, alertClickHandler);
+					
+					function alertClickHandler(evt:CloseEvent):void {
+						if (evt.detail == Alert.YES) {
+							
+							ModificarPropietario();
+							myViewStack.selectedChild = propietario;
+							CargaDGPropietario();
+						} else {
+							LimpiFormPropietario();
+						}
+					}
+				}                          
+				else{                      
+					Alert.show('Por favor complete los campos requeridos.','Revise los campos requeridos.');
+					
+				}
+				// TODO Auto-generated method stub
+				
+			}
+			
+			protected function Eliminarpropietario():void
+			{
+				
+				
+				try{
+					const deletes:Array = [DataPropietario.selectedItem.gra];
+					
+					eventsLayer.applyEdits(null,null,deletes,false,new AsyncResponder(featureLayer_editsCompleteHandler, featureLayer_faultHandler));
+					
+					function featureLayer_editsCompleteHandler(featureEditResults:FeatureEditResults, token:Object = null):void
+					{
+						Alert.show("delete sucessfull") 
+						coleccion.removeAll();
+						CargaDGPropietario();
+					}
+					
+					function featureLayer_faultHandler(event:Fault, token:Object = null):void
+					{
+						Alert.show("delete failed: " + event.message)
+					}
+				}
+				catch (error:Error)
+				{
+					Alert.show("error at deleting process" + error.toString())
+				}
+			}
+			
+			protected function EliminarCentral():void
+			{
+				
+				
+				try{
+					const deletes:Array = [DataCentral.selectedItem.gra];
+					
+					eventsLayerCentral.applyEdits(null,null,deletes,false,new AsyncResponder(featureLayer_editsCompleteHandler, featureLayer_faultHandler));
+					
+					function featureLayer_editsCompleteHandler(featureEditResults:FeatureEditResults, token:Object = null):void
+					{
+						Alert.show("delete sucessfull");
+						coleccioncentral.removeAll();
+						CargaDGCentral();
+					}
+					
+					function featureLayer_faultHandler(event:Fault, token:Object = null):void
+					{
+						Alert.show("delete failed: " + event.message)
+					}
+				}
+				catch (error:Error)
+				{
+					Alert.show("error at deleting process" + error.toString())
+				}
+			}
+			
+			protected function EliminarEtapa():void
+			{
+				try
+				{
+					const deletes:Array = [DGEtapa.selectedItem.gra];
+					
+					eventsLayerEtapa.applyEdits(null,null,deletes,false,new AsyncResponder(featureLayer_editsCompleteHandler, featureLayer_faultHandler));
+					
+					function featureLayer_editsCompleteHandler(featureEditResults:FeatureEditResults, token:Object = null):void
+					{
+						Alert.show("Eliminacion exitosa");
+						coleccionEtapa.removeAll();
+						ConsultaEtapas();
+					}
+					function featureLayer_faultHandler(event:Fault, token:Object = null):void
+					{
+						Alert.show("Eliminacion Fallida: " + event.message);
+					}
+					
+					
+					
+				} 
+				catch(error:Error) 
+				{
+					Alert.show("error at deleting process" + error.toString());
+				}
+				
+			}
+			
+			
+			//Obtiene index de un Dropdownlist.
+			public function obtenerid(arrayc:ArrayList,nombre:String):int{                   
+				
+				//Alert.show(nombre);
+				var len:int = arrayc.length;                   
+				var x:int = 0;
+				for (var i:int=0;i<len;i++)
+				{      
+					if (arrayc.getItemAt(i).descripcion == nombre)
+					{      
+						//CenEnerPrim.selectedIndex = i;
+						x=i;                                    
+					}
+				}
+				
+				return x;
+				
+			}
+			//Carga datos para modificar.
+			protected function QueryModCentral():void
+			{
+				
+				var idGrid:String = DataCentral.selectedItem['OBJECTID'];
+				// Query to get the cities under the specified state
+				var queryTask:QueryTask = new QueryTask();
+				queryTask.url = "http://gisred.chilquinta/arcgis/rest/services/PMGD/PMGD/FeatureServer/0";
+				queryTask.useAMF = false;
+				var query:Query = new Query();
+				query.outFields = [ "*"];
+				query.returnGeometry = false;
+				query.where = "OBJECTID = " + idGrid ;
+				queryTask.execute(query, new AsyncResponder(onResult, onFault));
+				// add the graphic on the map
+				function onResult( featureSet:FeatureSet, token:Object = null):void
+				{                          
+					
+					var dateFormatStr:String =  "dd/MM/yyyy";
+					var fecharecepcion:Number = featureSet.features[0].attributes["FECHA_RECEPCION"];
+					var fecharep:String =msToDate(fecharecepcion, dateFormatStr, true);                                  
+					var dia:String = fecharep.substring(0,2);
+					var mes:String = fecharep.substring(3,fecharep.length-5);
+					var ano:String = fecharep.substring(6,fecharep.length);
+					var fechapuesta:Number = featureSet.features[0].attributes["FECHA_PUESTA_SERVICIO"];
+					var fechaPues:String =msToDate(fechapuesta, dateFormatStr, true);
+					var dia2:String = fechaPues.substring(0,2);
+					var mes2:String = fechaPues.substring(3,fechaPues.length-5);
+					var ano2:String = fechaPues.substring(6,fechaPues.length);
+					
+					
+					                                              
+					CenFechaRecepcionMod.selectedDate =  new Date (ano,int(mes)-1,dia); 
+					CenNomCentralMod.text = featureSet.features[0].attributes["NOMBRE_CENTRAL"];
+					CenDirCentralMod.text = featureSet.features[0].attributes["DIRECCION_CENTRAL"];
+					CenComunaMod.text = featureSet.features[0].attributes["NOMBRE_COMUNA"];
+					var NomSiste:String = featureSet.features[0].attributes["NOMBRE_SISTEMA"]
+					CensistemaMod.selectedIndex = obtenerid(sistema,NomSiste);
+					CenPotenciaMod.text= featureSet.features[0].attributes["POTENCIA_INSTALADA"];
+					CenCapacidadMod.text= featureSet.features[0].attributes["CAPACIDAD_INSTALADA"];
+					CenTensionMod.text= featureSet.features[0].attributes["NIVEL_TENSION"];     
+					var Nomtipoenerg:String = featureSet.features[0].attributes["NOMBRE_TIPO_ENERGETICO"];
+					CenEnerPrimMod.selectedIndex = obtenerid(EnerPrim,Nomtipoenerg); 
+					CenAlimentadorMod.text = featureSet.features[0].attributes["NOMBRE_ALIMENTADOR"];
+					CenPtoConexionMod.text= featureSet.features[0].attributes["PUNTO_CONEXION"];
+					CenUnidadesMod.text= featureSet.features[0].attributes["NUMERO_UNIDADES"];
+					CenFechaPuestaServMod.selectedDate= new Date (ano2,int(mes2)-1,dia2);
+					//CenEstadoMod.selectedIndex = featureSet.features[0].attributes["ESTADO_ID"];
+					var Nomestado:String = featureSet.features[0].attributes["NOMBRE_ESTADO"]
+					CenEstadoMod.selectedIndex = obtenerid(estado,Nomestado);
+					CenPropietarioMod.text = featureSet.features[0].attributes["NOMBRE_PROPIETARIO"];      
+					lblCoordxMod.text = "X: " + featureSet.features[0].attributes["X"];
+					lblCoordyMod.text = "Y: " + featureSet.features[0].attributes["Y"];
+					
+					
+				}
+				function onFault(info:Object, token:Object = null):void
+				{
+					Alert.show("Consulta modificacion central con problemas"+ info.toString());
+				}
+			}                   
+			
+			
+			
+			private function msToDate(ms:Number, dateFormat:String, useUTC:Boolean):String  
+			{  
+				
+				var date:Date = new Date(ms);  
+				if (date.milliseconds == 999){ // workaround for REST bug  
+					date.milliseconds++;  
+				}  
+				if (useUTC){  
+					date.minutes += date.timezoneOffset;  
+				}  
+				if (dateFormat){           
+					
+					dateFormatter.dateTimePattern = dateFormat;  
+					var result:String = dateFormatter.format(date);  
+					if (result){  
+						return result;  
+					}else{  
+						return dateFormatter.errorText;  
+					}  
+				}else{  
+					return date.toLocaleString(); 
+					
+				}  
+			}  
+			
+			
+			protected function image1_clickHandler(event:Event):void
+			{
+				
+				if (event.target.selected){
+					
+					togBtn.label = "Off";
+					map.addEventListener(MapMouseEvent.MAP_CLICK,MaponClick);
+				} else{
+					
+					togBtn.label = "On";
+					
+					
+					map.removeEventListener(MapMouseEvent.MAP_CLICK,MaponClick);
+				}
+			}
+			
+			protected function BtnNewProp_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub                                               
+				myViewStack.selectedChild=NewProp;                                 
+				LimpiFormPropietario();
+				
+			}
+			
+			
+			
+			
+			protected function MaponClick(event:MapMouseEvent):void
+			{
+				
+				var query:Query = new Query();
+				
+				query.spatialRelationship=Query.SPATIAL_REL_CONTAINS;
+				
+				var rectangulo:Polygon=new Polygon;
+				
+				rectangulo.addRing(crearRectangulo(event.mapPoint,5));
+				query.geometry = rectangulo;
+				var parametros:ArrayList=new ArrayList;
+				
+				parametros.addItem("rotulo");
+				parametros.addItem("alimentador");
+				parametros.addItem("comuna");           
+				query.outFields=parametros.toArray();                 
+				query.returnGeometry = true;            
+				
+				var queryTask:QueryTask =  new QueryTask;
+				queryTask.url = "http://gisred.chilquinta/arcgis/rest/services/Chilquinta_006/Nodos_006/MapServer/0";
+				
+				queryTask.execute(query, new AsyncResponder(onResult, onFault));                 
+				
+				function onResult(featureSet:FeatureSet, token:Object = null):void
+				{
+					
+					elementosEncontrados=new ArrayList;
+					
+					if (featureSet.features.length > 0)
+					{
+						for each (var encontrado:Graphic in featureSet.features)
+						{                                              
+							elementosEncontrados.addItem(encontrado);                                              
+						}
+					}else{
+						Alert.show("Punto de conexión no encontrado");
+						
+						
+					}
+					
+					if (elementosEncontrados.length>0){
+						
+						mostrarInformacionEnVentanaEdicion(elementosEncontrados.getItemAt(0) as Graphic);
+					}
+					else{
+						CenPtoConexion.text="";
+						CenAlimentador.text="";
+						CenComuna.text="";
+					}
+					
+				}
+				function onFault(info:Object, token:Object = null):void
+				{
+					
+					Alert.show(info.faultString + "\n\n" + info.faultDetail, "queryTask fault " + info.faultCode);
+				}
+				
+			}
+			
+			public function mostrarInformacionEnVentanaEdicion( gr:Graphic ):void{
+				var rotulo:String= gr.attributes["rotulo"];
+				var alimentador:String= gr.attributes["alimentador"];
+				var comuna:String= gr.attributes["comuna"];
+				
+				CenPtoConexion.text=rotulo;
+				CenAlimentador.text=alimentador;
+				CenComuna.text=comuna;
+				Guarda_idComuna(comuna);
+				BuscaTensionAlim(alimentador);
+				
+				
+			}
+			
+			
+			private function Guarda_idComuna(comuna:String):void{
+				// TODO Auto-generated method stub
+				var queryTask:QueryTask = new QueryTask();
+				queryTask.url = "http://gisred.chilquinta/arcgis/rest/services/MapaBase/MapServer/4";
+				queryTask.useAMF = false;
+				var query:Query = new Query();
+				query.outFields = ["cd_sec"];
+				query.returnGeometry = false;
+				query.where = "nombre='" +comuna + "'";               
+				queryTask.execute(query, new AsyncResponder(onResult, onFault));
+				
+				// add the graphic on the map
+				function onResult(featureSet:FeatureSet, token:Object = null):void
+				{      
+					for each (var myGraphic:Graphic in featureSet.features)
+					{                                       
+						comunaid=(myGraphic.attributes['cd_sec']);                                      
+					}                   
+					
+				}
+				function onFault(info:Object, token:Object = null):void
+				{
+					Alert.show("no se puede cargar tipo sistema "+ info.toString());
+				}      
+			}
+			
+			private function BuscaTensionAlim(alimentador:String):void
+			{
+				// TODO Auto-generated method stub
+				var queryTask:QueryTask = new QueryTask();
+				queryTask.url = "http://gisred.chilquinta/arcgis/rest/services/Chilquinta_006/Chilquinta/MapServer/4";
+				queryTask.useAMF = false;
+				var query:Query = new Query();
+				query.outFields = ["id_alimentador,tension"];
+				query.returnGeometry = false;
+				query.where = "nombre='" +alimentador + "'";                
+				queryTask.execute(query, new AsyncResponder(onResult, onFault));
+				
+				// add the graphic on the map
+				function onResult(featureSet:FeatureSet, token:Object = null):void
+				{                                       
+					
+					
+					for each (var myGraphic:Graphic in featureSet.features)
+					{                                       
+						alimentadorId=(myGraphic.attributes['id_alimentador']);     
+						tensionAlim =(myGraphic.attributes['tension']);
+						tensionAlim = tensionAlim.substring(0,2);
+						
+						CenTension.text = tensionAlim;
+					}                   
+					
+				}
+				
+				function onFault(info:Object, token:Object = null):void
+				{
+				}
+			}
+			
+			private function crearRectangulo(mapPoint:MapPoint,delta:Number):Array 
+			{ 
+				var arrayOfPoints:Array = new Array();
+				
+				arrayOfPoints[0] = new MapPoint(mapPoint.x-delta,mapPoint.y-delta,mapPoint.spatialReference);                      
+				arrayOfPoints[1] = new MapPoint(mapPoint.x-delta,mapPoint.y+delta,mapPoint.spatialReference);
+				arrayOfPoints[2] = new MapPoint(mapPoint.x+delta,mapPoint.y+delta,mapPoint.spatialReference);
+				arrayOfPoints[3] = new MapPoint(mapPoint.x+delta,mapPoint.y-delta,mapPoint.spatialReference);
+				arrayOfPoints[4] = new MapPoint(mapPoint.x-delta,mapPoint.y-delta,mapPoint.spatialReference);
+				
+				return arrayOfPoints;
+			}
+			
+			protected function ModVentanaNormal():void
+			{
+				// TODO Auto-generated method stub
+				wTemplate.height=500;
+			}
+			
+			protected function BtnUbiCentral_clickHandler(event:Event):void
+			{
+				if (event.target.selected){
+					
+					togBtnUbicacion.label = "Off";
+					map.addEventListener(MapMouseEvent.MAP_CLICK,crearSimboloCentral);
+				} else{
+					
+					togBtnUbicacion.label = "On";
+					map.removeEventListener(MapMouseEvent.MAP_CLICK,crearSimboloCentral);
+				}
+				
+			}
+			
+			public function crearSimboloCentral(event:MapMouseEvent):void{
+				map.defaultGraphicsLayer.clear();
+				var redglow:PictureMarkerSymbol = new PictureMarkerSymbol;
+				redglow.width=60; redglow.height=60; redglow.source="assets/images/Red_glow.swf"; redglow.xoffset=-17; redglow.yoffset=18;
+				
+				var clickLocation:MapPoint = new MapPoint;
+				//Proviene del evento mapmouseevent, hace click en el mapa para dibujar
+				clickLocation = event.mapPoint;
+				clickGraphic = new Graphic(event.mapPoint, redglow);
+				map.defaultGraphicsLayer.add(clickGraphic);
+				
+				posx = Number(clickLocation.x.toString());
+				posy = Number(clickLocation.y.toString());
+				
+				lblCoordx.text = "X: " + clickLocation.x.toString();
+				lblCoordy.text = "Y: " + clickLocation.y.toString();
+				
+			}
+			
+			protected function BtnGrabarCentral_clickHandler(event:MouseEvent):void
+			{
+				
+				errors = new Array();
+				errors = Validator.validateAll(validatorsArray2);
+				//Grabar_nueva_central();
+				
+				if (errors.length == 0)
+				{
+					Alert.show("¿Está seguro que desea guardar?", "Ingreso de Central",mx.controls.Alert.YES | mx.controls.Alert.NO, this, alertClickHandler);
+					
+					function alertClickHandler(evt:CloseEvent):void 
+					{
+						if (evt.detail == Alert.YES)
+						{      
+							
+							if (lblCoordx.text != "X: 0"){
+								Grabar_nueva_central();
+								
+							}else {
+								Alert.show("Por favor ingrese una coordenada");
+							}
+							
+						}
+						else 
+						{
+							//     LimpiFormPropietario();
+						}
+					}
+				}                          
+				else
+				{                          
+					Alert.show('Por favor complete los campos requeridos.','Revise los campos requeridos.');                                       
+				}
+			}
+			
+			protected function CargaDGCentral():void
+			{      
+				coleccioncentral.removeAll();                         
+				txtFilterCentral.addEventListener(Event.CHANGE, filterGridCentral);
+				/*----------------------------*/
+				CreaMenuContextCentral();
+				QueryCentral();
+			}
+			protected function CargaDGEtapa():void
+			{
+				coleccionEtapaProp.removeAll();                       
+				txtFilterEtaPropietario.addEventListener(Event.CHANGE, filterGridEtapaProp);
+				/*----------------------------*/                      
+				CreaMenuContextEtapa();
+				QueryPropietario();
+			}
+			
+			
+			
+			
+			
+			protected function ContexGotoCentral(e:ContextMenuEvent):void
+			{
+				// TODO Auto-generated method stub
+				var queryTaskCentral:QueryTask = new QueryTask();
+				queryTaskCentral.showBusyCursor = true;
+				
+				queryTaskCentral.url="http://gisred.chilquinta/arcgis/rest/services/PMGD/PMGD/MapServer/0/query";
+				queryTaskCentral.useAMF=false;
+				
+				var querycentral:Query = new Query();
+				querycentral.outSpatialReference=  map.spatialReference;
+				querycentral.returnGeometry=true;
+				
+				
+				querycentral.where="OBJECTID=" + DataCentral.selectedItem['OBJECTID'];
+				
+				
+				queryTaskCentral.execute(querycentral, new AsyncResponder(onResult, onFault));
+				
+				function onResult(featureSet:FeatureSet, token:Object = null):void
+				{
+					map.zoomTo(featureSet.features[0].geometry);                       
+					map.level = 16;                                
+				}
+				function onFault(info:Object, token:Object = null):void
+				{
+					Alert.show(info.toString(), "Zoom con Problemas");
+				}
+				
+			}
+			
+			protected function EtaTipoEtapa_initializeHandler(event:FlexEvent):void
+			{
+				// TODO Auto-generated method stub
+				cargaCenTipoEtapa();
+				
+			}
+			
+			public function  cargaCenTipoEtapa():void{
+				// TODO Auto-generated method stub
+				var queryTask:QueryTask = new QueryTask();
+				queryTask.url = "http://gisred.chilquinta/arcgis/rest/services/PMGD/PMGD/MapServer/1";
+				queryTask.useAMF = false;
+				var query:Query = new Query();
+				query.outFields = ["*"];
+				query.returnGeometry = true;
+				query.where = "1 = 1";
+				query.orderByFields=["ETAPA_ID"];
+				queryTask.execute(query, new AsyncResponder(onResult, onFault));
+				
+				// add the graphic on the map
+				function onResult(featureSet:FeatureSet, token:Object = null):void
+				{
+					for each (var myGraphic:Graphic in featureSet.features)
+					{
+						
+						DataTipoEtapa.addItem({descripcion:myGraphic.attributes['DESCRIPCION'],id:myGraphic.attributes['ETAPA_ID']});
+						
+					}
+					DDLEtaTipoEtapa.dataProvider=DataTipoEtapa;
+					DDLEtaTipoEtapa.labelField = "descripcion";    
+					
+					DDLEtaTipoEtapa.selectedIndex = -1;
+				}
+				function onFault(info:Object, token:Object = null):void
+				{
+					Alert.show("no se puede cargar tipo sistema "+ info.toString());
+				}
+			}
+			
+			protected function BtnNewEtapa_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				myViewStack.selectedChild = NewEtapa;   
+				
+				
+				
+				txtEtapaCentral.text = Generica.CentralWinNombre;
+				lblEtapaCentralID = Generica.CentralWinID;
+				txtEtapaPropietario.text =Generica.CentralWinPropietarioNombre;
+				LblEtapaProID = Generica.CentralWinPropietarioID;
+			}
+			
+			
+			protected function txtEtapaCentral_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				// TODO Auto-generated method stub
+				//     PopUpManager.addPopUp(WinBusCentral, this, true);
+				//     PopUpManager.centerPopUp(WinBusCentral);
+				//     WinBusCentral.addEventListener(FocusEvent.FOCUS_OUT,CenCargaProp);
+				//     vfgdaf
+				
+				/*     function CenCargaProp(event:Event):void
+				{                          
+				txtEtapaCentral.text = Generica.CentralWinNombre;
+				lblEtapaCentralID = Generica.CentralWinID;
+				txtEtapaPropietario.text =Generica.CentralWinPropietarioNombre;
+				LblEtapaProID = Generica.CentralWinPropietarioID;
+				}*/
+			}
+			
+			protected function CenEstadoEtapa_initializeHandler(event:FlexEvent):void
+			{
+				// TODO Auto-generated method stub
+				estado.removeAll();
+				CBOEstado();
+			}
+			
+			protected function BtnAdjuntarPDF_clickHandler(event:MouseEvent):void
+			{                                 
+				var fileFilterPDF:FileFilter = null;
+				fileFilterPDF = new FileFilter(".pdf Files Only", "*.pdf");
+				
+				frPDF = new FileReference;
+				frPDF.addEventListener(Event.SELECT, dataFileSelectedPDF);
+				frPDF.browse([fileFilterPDF]);    
+			}            
+			
+			//selecciona y carga el archivo de la foto anterior
+			protected function dataFileSelectedPDF(event:Event):void
+			{
+				
+				frPDF.removeEventListener(Event.SELECT,dataFileSelectedPDF);
+				
+				//listen for when the file has loaded
+				frPDF.addEventListener(Event.COMPLETE, uploadCompleteHandlerAntes);
+				
+				//listen for any errors reading the file
+				frPDF.addEventListener(IOErrorEvent.IO_ERROR, onLoadError);
+				
+				//upload select file
+				frPDF.load();
+			}
+			
+			//carga la foto anterior a un bytearray y la sube al canvas con la funcion cargarJPG
+			protected function uploadCompleteHandlerAntes(event:Event):void
+			{
+				frPDF.removeEventListener(Event.COMPLETE, uploadCompleteHandlerAntes);
+				
+				//Display the name of the selected file
+				LblNomPDF.text = frPDF.name;
+				
+				//Covert the file into a byteArray
+				myByteArrayPDF =  new ByteArray(); 
+				myByteArrayPDF = frPDF.data as ByteArray;
+				
+			}
+			
+			//permite saber si hay un error al cargar el archivo de fotos.
+			private function onLoadError(error:IOErrorEvent):void
+			{
+				Alert.show("Error al cargar archivo : " + error.text);                  
+			}
+			
+			protected function BtnGuardarEtapa_clickHandler(event:MouseEvent):void
+			{
+				errors = new Array();
+				errors = Validator.validateAll(validatorsArrayEtapa);
+				//Grabar_nueva_central();
+				
+				if (errors.length == 0)
+				{
+					Alert.show("¿Está seguro que desea guardar?", "Ingreso de Etapa",mx.controls.Alert.YES | mx.controls.Alert.NO, this, alertClickHandler);
+					
+					function alertClickHandler(evt:CloseEvent):void 
+					{
+						if (evt.detail == Alert.YES)
+						{      
+							grabaEtapa();                                         
+						}
+						else 
+						{
+							//     LimpiFormPropietario();
+						}
+					}
+				}                          
+				else
+				{                          
+					Alert.show('Por favor complete los campos requeridos.','Revise los campos requeridos.');                                        
+				}
+				
+			}
+			
+			
+			protected function grabaEtapa():void
+			{
+				var adds:Array=new Array;
+				var i:int = 0;
+				var nuevaEtapa:* = new Object;
+				
+				
+				Generica.EtapaID = DDLEtaTipoEtapa.selectedItem.id;
+				Generica.EstadoID = CenEstadoEtapa.selectedItem.id;
+				
+				nuevaEtapa["EMPRESA_ID"]= "006";
+				nuevaEtapa["PROPIETARIO_ID"]= int(Generica.CentralWinPropietarioID);
+				nuevaEtapa["ETAPA_ID"]= int(Generica.EtapaID);              
+				nuevaEtapa["CENTRAL_ID"]= int(Generica.CentralWinID);                     
+				nuevaEtapa["FECHA_RECEPCION"]=EtaFechaRecepcion.selectedDate;                          
+				nuevaEtapa["NOM_ESTADO"]= String(CenEstadoEtapa.selectedItem.descripcion);                           
+				nuevaEtapa["NOM_ETAPA"]= String(DDLEtaTipoEtapa.selectedItem.descripcion);
+				nuevaEtapa["ESTADO_ID"]= int(Generica.EstadoID);
+				
+				myPropLayer.url = "http://gisred.chilquinta/arcgis/rest/services/PMGD/PMGD/FeatureServer/8";       
+				
+				//     var graficoEditadoActual:Graphic=new Graphic(new MapPoint(),null,nuevaCentral);102100
+				var graficoEditadoActual:Graphic=new Graphic(null,null,nuevaEtapa);
+				adds[0]=graficoEditadoActual;    
+				
+				myPropLayer.applyEdits(adds,null,null,false,new AsyncResponder(onResult, onFault));
+				
+				
+				function onResult():void
+				{
+					//Alert.show("Etapa agregada");
+					Alert.show("Etapa agregada ");
+					ObtenerIDEtapa();
+					BtnGuardarPDF.enabled = true;
+					BtnGuaradarEtapa.enabled = false;
+					BtnAdjuntarPDF.enabled = true;
+				}
+				
+				function onFault(info:Object, token:Object = null):void
+				{
+					
+					Alert.show("Error al grabar Etapa");
+					
+				}
+				
+			}
+			
+			protected function ObtenerIDEtapa():void
+			{
+				// TODO Auto-generated method stub
+				var queryTask:QueryTask = new QueryTask();
+				queryTask.url = "http://gisred.chilquinta/arcgis/rest/services/PMGD/PMGD/MapServer/8";
+				queryTask.useAMF = false;
+				var query:Query = new Query();
+				query.outFields = ["OBJECTID"];
+				query.returnGeometry = false;
+				query.where = "EMPRESA_ID='006' AND ETAPA_ID= " + int(Generica.EtapaID) + " AND CENTRAL_ID= " + int(Generica.CentralWinID); 
+				query.orderByFields=["OBJECTID"];
+				queryTask.execute(query, new AsyncResponder(onResult, onFault));
+				
+				// add the graphic on the map
+				function onResult(featureSet:FeatureSet, token:Object = null):void
+				{
+					Generica.ObjectEtapa= featureSet.features[0].attributes["OBJECTID"];
+				}
+				
+				function onFault(info:Object, token:Object = null):void
+				{
+					Alert.show("Error al obtener el objectid de la etapa");
+				}      
+			}
+			
+			
+			
+			protected function maxEtapa():void{
+				
+				
+				// TODO Auto-generated method stub
+				var queryTask:QueryTask = new QueryTask();
+				queryTask.url = "http://gisred.chilquinta/arcgis/rest/services/PMGD/PMGD/MapServer/8";
+				queryTask.useAMF = false;
+				var query:Query = new Query();
+				query.outFields = ["ETAPA_ID"];
+				query.returnGeometry = false;
+				query.where = "ETAPA_ID=(SELECT MAX(ETAPA_ID) FROM PMGD_ETAPA WHERE EMPRESA_ID='006' AND CENTRAL_ID=1 AND PROPIETARIO_ID=2)";
+				query.orderByFields=["ETAPA_ID"];
+				queryTask.execute(query, new AsyncResponder(onResult, onFault));
+				
+				
+				
+				// add the graphic on the map
+				function onResult(featureSet:FeatureSet, token:Object = null):void
+				{
+					for each (var myGraphic:Graphic in featureSet.features)
+					{
+						MaxValueProp=(myGraphic.attributes['ETAPA_ID']);
+					}
+					MaxValueProp = MaxValueProp + 1; Alert.show(MaxValueProp.toString());
+					//GrabaEtapa();
+				}
+				
+				
+				function onFault(info:Object, token:Object = null):void
+				{
+					Alert.show("no se puede cargar tipo sistema "+ info.toString());
+				}      
+			}
+			
+			protected function BtnGrabarMod_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				errors = new Array();                          
+				errors = Validator.validateAll(validatorsArrayModProp);                          
+				validaRutMod();     
+				
+				if ((errors.length == 0) && (ValidarRut.ErrorRut == 0)){
+					
+					Alert.show("esta seguro que desea guardar las modificacion?", "Modificacion de Propietarios",mx.controls.Alert.YES | mx.controls.Alert.NO, this, alertClickHandler);
+					
+					function alertClickHandler(evt:CloseEvent):void {
+						if (evt.detail == Alert.YES) {
+							RutPropMod.text =RutOK;
+							ModificarPropietario();
+						} else {
+							LimpiFormPropietario();
+						}
+					}
+				}                          
+				else{                      
+					Alert.show('Por favor complete los campos requeridos.','Revise los campos requeridos.');
+					
+				}
+			}
+			
+			private function BusquedaEtapaPropietario():void
+			{
+				var queryTask:QueryTask = new QueryTask(service);
+				var query:Query = new Query();
+				query.where = "EMPRESA_ID = 6";
+				query.outFields = ['PROPIETARIO_ID,PROPIETARIO_PMGD'];
+				query.orderByFields = ['PROPIETARIO_PMGD'];
+				query.returnGeometry = false;
+				queryTask.execute(query, new AsyncResponder(onResultQuery, onFaultQuery));
+				
+				var arrEtapaProp:Array = new Array;
+				
+				function onResultQuery(featureSet:FeatureSet, token:Object = null):void
+				{
+					var k:int;
+					coleccionEtapaProp.removeAll();
+					for(k=0;k<featureSet.features.length;k++)
+					{
+						var recordGraphic:Graphic = featureSet.features[k];
+						coleccionEtapaProp.addItem({OBJECTID:recordGraphic.attributes["OBJECTID"], 
+							PROPIETARIO_ID:recordGraphic.attributes["PROPIETARIO_ID"],
+							PROPIETARIO_PMGD:recordGraphic.attributes["PROPIETARIO_PMGD"],
+							gra:recordGraphic });
+					}
+					
+				}
+				function onFaultQuery(info:Object, token:Object = null):void
+				{   
+					Alert.show("Error en consulta","Carga de propietarios");
+				}
+			}
+			
+			protected function DGEtapaPorpietario_clickHandler(event:MouseEvent):void
+			{
+				coleccionEtapa.removeAll();
+				// TODO Auto-generated method stub
+				var queryTask:QueryTask = new QueryTask(serviceCentral);
+				var query:Query = new Query();
+				query.where = "PROPIETARIO_ID=" + DGEtapaPorpietario.selectedItem['PROPIETARIO_ID'] + "AND EMPRESA_ID = '006'";
+				query.outFields = ['OBJECTID,CENTRAL_ID,NOMBRE_CENTRAL'];
+				query.orderByFields = ['NOMBRE_CENTRAL'];
+				query.returnGeometry = true;
+				queryTask.execute(query, new AsyncResponder(onResultQuery, onFaultQuery));
+				
+				var arrEtapaProp:Array = new Array;
+				
+				function onResultQuery(featureSet:FeatureSet, token:Object = null):void
+				{
+					var k:int;
+					coleccionEtapaCentral.removeAll();
+					for(k=0;k<featureSet.features.length;k++)
+					{
+						var recordGraphic:Graphic = featureSet.features[k];
+						coleccionEtapaCentral.addItem({OBJECTID:recordGraphic.attributes["OBJECTID"], 
+							CENTRAL_ID:recordGraphic.attributes["CENTRAL_ID"],
+							NOMBRE_CENTRAL:recordGraphic.attributes["NOMBRE_CENTRAL"],
+							gra:recordGraphic });
+					}
+					DGEtapaCentral.dataProvider = coleccionEtapaCentral;
+					
+					
+					Generica.CentralWinPropietarioNombre = DGEtapaPorpietario.selectedItem['PROPIETARIO_PMGD'];
+					Generica.CentralWinPropietarioID = DGEtapaPorpietario.selectedItem['PROPIETARIO_ID'];
+					BtnNewEtapa.enabled = false;
+				}
+				function onFaultQuery(info:Object, token:Object = null):void
+				{   
+					Alert.show("Error en consulta","Carga de propietarios");
+				}
+			}
+			
+			protected function DGEtapaCentral_clickHandler(event:MouseEvent):void
+			{      
+				ConsultaEtapas();
+			}
+			protected function ConsultaEtapas():void
+			{
+				coleccionEtapa.removeAll();
+				// TODO Auto-generated method stub
+				var queryTask:QueryTask = new QueryTask(serviceEtapa);
+				var query:Query = new Query();
+				query.where = "CENTRAL_ID=" + DGEtapaCentral.selectedItem['CENTRAL_ID'] + " AND PROPIETARIO_ID = "  + DGEtapaPorpietario.selectedItem['PROPIETARIO_ID'] + " AND EMPRESA_ID = '006'";
+				//Alert.show("CENTRAL_ID=" + DGEtapaCentral.selectedItem['CENTRAL_ID'] + " AND PROPIETARIO_ID = "  + DGEtapaPorpietario.selectedItem['PROPIETARIO_ID'] );
+				query.outFields = ['*'];
+				query.orderByFields = ['ETAPA_ID'];
+				query.returnGeometry = false;
+				queryTask.execute(query, new AsyncResponder(onResultQuery, onFaultQuery));
+				
+				var arrEtapa:Array = new Array;
+				
+				function onResultQuery(featureSet:FeatureSet, token:Object = null):void
+				{
+					var k:int;
+					coleccionEtapa.removeAll();
+					for(k=0;k<featureSet.features.length;k++)
+					{
+						var recordGraphic:Graphic = featureSet.features[k];
+						coleccionEtapa.addItem({OBJECTID:recordGraphic.attributes["OBJECTID"], 
+							ETAPA_ID:recordGraphic.attributes["ETAPA_ID"],
+							NOM_ETAPA:recordGraphic.attributes["NOM_ETAPA"],
+							FECHA_RECEPCION:dateFormatter.format(new Date(recordGraphic.attributes["FECHA_RECEPCION"])),
+							ESTADO:recordGraphic.attributes["NOM_ESTADO"],
+							gra:recordGraphic });
+						
+					}
+					DGEtapa.dataProvider = coleccionEtapa;         
+					
+					Generica.CentralWinNombre = DGEtapaCentral.selectedItem['NOMBRE_CENTRAL'];
+					Generica.CentralWinID = DGEtapaCentral.selectedItem['CENTRAL_ID'];
+					BtnNewEtapa.enabled = true;
+				}
+				function onFaultQuery(info:Object, token:Object = null):void
+				{   
+					Alert.show("Error en consulta","Carga de Etapas");
+				}
+			}
+			
+			protected function central_initializeHandler(event:FlexEvent):void
+			{
+				// TODO Auto-generated method stub
+				CargaDGCentral();
+			}
+			
+			protected function etapa_initializeHandler(event:FlexEvent):void
+			{
+				// TODO Auto-generated method stub
+				CargaDGEtapa();
+			}
+			
+			protected function BtnGuardarPDF_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				var myDetalle:FeatureLayer = new FeatureLayer(serviceEtapa);
+				myDetalle.addAttachment(Generica.ObjectEtapa,myByteArrayPDF,LblNomPDF.text,"PDF",new AsyncResponder(onResult,onFault));
+			}
+			
+			public function onResult(event:FeatureEditResult, token:Object = null):void {
+				if(event.success)
+				{
+					Alert.show("PDF AGREGADO");
+					myViewStack.selectedChild = NewEtapa;   
+					
+				}
+				else
+				{
+					Alert.show("Fallo en agregar EL pdf");                                    
+				}                   
+			}
+			//funcion que permite saber si el servicio para agregar los attachment está disponible
+			public function onFault(event:FaultEvent, token:Object = null):void
+			{
+				Alert.show("Fallo en conectarse al servicio para agregar EL PDF. Contáctese con el administrador de GISRED.");    
+			}
+			
+			
+			public function cargarPDFDesdeServicio(event:MouseEvent):void {
+				
+				var myDetalle:FeatureLayer = new FeatureLayer(serviceEtapa);
+				
+				var objActividad:int= DGEtapa.selectedItem['OBJECTID']; 
+				
+				var verPDF:String;
+				myDetalle.queryAttachmentInfos(objActividad,new AsyncResponder(onResult,onFault));  
+				
+				function onResult(event:Array, token:Object=null):void{  
+					//tiene attachment
+					if (event.length>0) 
+					{                                       
+						verPDF =  event[0].url;
+						navigateToURL( new URLRequest(verPDF), '_new' )
+						Generica.objectIDAttachment = event[0].id;
+					}
+						//no tiene attachment
+					else  
+					{
+						Alert.show("La etapa no tiene PDF");
+					}
+					
+				}
+				function onFault(event:Object,token:Object=null):void{
+					Alert.show("No se pudo conectar al servicio de PDF adjuntas. Contáctese con el administrador de GISRED.");
+				}      
+			}
+			
+			protected function BtnVolverEtapa_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				myViewStack.selectedChild = etapa;      
+				limpiaModEtapa();
+				ConsultaEtapas();
+				
+			}
+			
+			public function limpiaModEtapa():void{
+				DDLEtaTipoEtapaMod.selectedIndex = -1;
+				EtaFechaRecepcionMod.selectedIndex = -1;
+				CenEstadoEtapaMod.selectedIndex = -1;
+				
+				LblNomPDFMod.text = "";
+			}
+			
+			
+			
+			
+			
+			protected function BtnGuardarEtapaMod_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				var errors1:Array = new Array();
+				errors1 = Validator.validateAll(validatorsArrayEtapaMOD);
+				//Grabar_nueva_central();
+				
+				if (errors1.length == 0)
+				{
+					Alert.show("¿Está seguro que desea modificar la etapa?", "Ingreso de Etapa",mx.controls.Alert.YES | mx.controls.Alert.NO, this, alertClickHandler);
+					
+					function alertClickHandler(evt:CloseEvent):void 
+					{
+						if (evt.detail == Alert.YES)
+						{      
+							modificarEtapa();   
+							//     Alert.show(LblObjectActividad.text);
+						}
+						else 
+						{
+							//     LimpiFormPropietario();
+						}
+					}
+				}                          
+				else
+				{                          
+					Alert.show('Por favor complete los campos requeridos.','Revise los campos requeridos.');                                        
+				}
+			}
+			
+			public function modificarEtapa():void{
+				var cambiosEtapa:* = new Object;
+		
+				cambiosEtapa["OBJECTID"]= Generica.EtapaIdMod;                                
+				cambiosEtapa["EMPRESA_ID"]="006"; 
+				cambiosEtapa["FECHA_RECEPCION"]= EtaFechaRecepcionMod.text;
+				cambiosEtapa["ETAPA_ID"]=int(DDLEtaTipoEtapaMod.selectedItem.id);
+				cambiosEtapa["NOM_ETAPA"]=String(DDLEtaTipoEtapaMod.selectedItem.descripcion);       
+				cambiosEtapa["PROPIETARIO_ID"]=Generica.EtapaIdModProp;
+				cambiosEtapa["CENTRAL_ID"]=Generica.EtapaIdModCentral;
+				cambiosEtapa["ESTADO_ID"]=int(CenEstadoEtapaMod.selectedItem.id);
+				cambiosEtapa["NOM_ESTADO"]= String(CenEstadoEtapaMod.selectedItem.descripcion);
+				
+				var propFeature:FeatureLayer = new FeatureLayer();
+				
+				propFeature.url = "http://gisred.chilquinta/arcgis/rest/services/PMGD/PMGD/FeatureServer/8";
+				
+				var nuevoGraphic:Graphic = new Graphic(null, null, cambiosEtapa);
+				propFeature.applyEdits(null,[nuevoGraphic],null, false,new AsyncResponder(onResult, onFault));
+				
+				function onResult():void
+				{
+					Alert.show("Registro de etapa actualizada exitosamente");
+				}
+				
+				function onFault(info:Object, token:Object = null):void
+				{
+					Alert.show("Error al modificar registro de etapa "+info.toString());
+				}
+				
+			}
+			
+			protected function BtnGuardarPDFMod_clickHandler(event:MouseEvent):void
+			{
+				//ELIMINAR Y GRABAR PDF
+				var myDetalle:FeatureLayer = new FeatureLayer("http://gisred.chilquinta/arcgis/rest/services/PMGD/PMGD/FeatureServer/8");
+				var auxFotos:Array = new Array;
+				auxFotos.push(Generica.EtapaObPDFId);
+				myDetalle.deleteAttachments(Generica.EtapaIdMod,auxFotos,false,new AsyncResponder(onResult2,onFault2));
+				function onResult2(event:Array, token:Object = null):void{  
+					
+				}
+				function onFault2(event:Object,token:Object=null):void{
+					Alert.show("No se pudo conectar al servicio de adjuntos");
+				}      
+				
+				myDetalle.addAttachment(Generica.EtapaIdMod,myByteArrayPDF,frPDF.name,"PDF",new AsyncResponder(onResult3,onFault3));
+				//funcion que retorna un true o false si EL PDF fue agregado o no
+				function onResult3(event:FeatureEditResult, token:Object = null):void {
+					if(event.success){
+						Alert.show("PDF Agregado");
+						
+					}else{
+						Alert.show("Fallo en agregar el PDF");                                   
+					}                   
+				}//funcion que permite saber si el servicio para agregar los attachment está disponible
+				function onFault3(event:FaultEvent, token:Object = null):void{
+					Alert.show("Fallo en conectarse al servicio para agregar el PDF. Contáctese con el administrador de GISRED.");  
+				}      
+				
+				
+				
+				
+			}
+			
+			
+			protected function BtnAdjuntarPDFMod_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				var fileFilterPDF:FileFilter = null;
+				fileFilterPDF = new FileFilter(".pdf Files Only", "*.pdf");
+				
+				frPDF = new FileReference;
+				frPDF.addEventListener(Event.SELECT, dataFileSelectedPDFMOD);
+				frPDF.browse([fileFilterPDF]);    
+			}
+			
+			//selecciona y carga el archivo de la foto anterior
+			protected function dataFileSelectedPDFMOD(event:Event):void
+			{
+				
+				frPDF.removeEventListener(Event.SELECT,dataFileSelectedPDFMOD);
+				
+				//listen for when the file has loaded
+				frPDF.addEventListener(Event.COMPLETE, uploadCompleteHandlerAntesMOD);
+				
+				//listen for any errors reading the file
+				frPDF.addEventListener(IOErrorEvent.IO_ERROR, onLoadErrorMOD);
+				
+				//upload select file
+				frPDF.load();
+			}
+			
+			//carga la foto anterior a un bytearray y la sube al canvas con la funcion cargarJPG
+			protected function uploadCompleteHandlerAntesMOD(event:Event):void
+			{
+				frPDF.removeEventListener(Event.COMPLETE, uploadCompleteHandlerAntesMOD);
+				
+				//Display the name of the selected file
+				LblNomPDFMod.text = frPDF.name;
+				
+				//Covert the file into a byteArray
+				myByteArrayPDF =  new ByteArray(); 
+				myByteArrayPDF = frPDF.data as ByteArray;
+				
+			}
+			
+			//permite saber si hay un error al cargar el archivo de fotos.
+			private function onLoadErrorMOD(error:IOErrorEvent):void
+			{
+				Alert.show("Error al cargar archivo : " + error.text);                  
+			}
+			
+			
+			
+		]]>
+		
+	</fx:Script>
+	
+	
+	<fx:Declarations>
+		
+		
+		<!--Array of Validators--> 
+		<fx:Array id="validatorsArray">
+			<mx:StringValidator id="RazPropValidator" source="{RazProp}" property="text" required="true" trigger="{BtnGrabar}" triggerEvent="click"/>                     
+			<mx:StringValidator id="SiglaPropValidator" source="{SiglaProp}" property="text" required="true" trigger="{BtnGrabar}" triggerEvent="click"/>
+			<mx:StringValidator id="RutPropValidator" source="{RutProp}" property="text" required="true" trigger="{BtnGrabar}" triggerEvent="click"/>
+			<mx:StringValidator id="DireccPropValidator" source="{DireccProp}" property="text" required="true" trigger="{BtnGrabar}" triggerEvent="click"/>
+			<mx:StringValidator id="ReprePropValidator" source="{RepreProp}" property="text" required="true" trigger="{BtnGrabar}" triggerEvent="click"/>
+			<mx:StringValidator id="FonoPropValidator" source="{FonoProp}" property="text" required="true" trigger="{BtnGrabar}" triggerEvent="click"/>
+			<mx:EmailValidator id="emailValidator" source="{email}" property="text" required="true" trigger="{BtnGrabar}" triggerEvent="click"/>
+			
+		</fx:Array>  
+		
+		<fx:Array id="validatorsArrayModProp">
+			<mx:StringValidator id="RazPropValidatorMod" source="{RazPropMod}" property="text" required="true" trigger="{BtnGrabarMod}" triggerEvent="click"/>                        
+			<mx:StringValidator id="SiglaPropValidatorMod" source="{SiglaPropMod}" property="text" required="true" trigger="{BtnGrabarMod}" triggerEvent="click"/>
+			<mx:StringValidator id="RutPropValidatorMod" source="{RutPropMod}" property="text" required="true" trigger="{BtnGrabarMod}" triggerEvent="click"/>
+			<mx:StringValidator id="DireccPropValidatorMod" source="{DireccPropMod}" property="text" required="true" trigger="{BtnGrabarMod}" triggerEvent="click"/>
+			<mx:StringValidator id="ReprePropValidatorMod" source="{ReprePropMod}" property="text" required="true" trigger="{BtnGrabarMod}" triggerEvent="click"/>
+			<mx:StringValidator id="FonoPropValidatorMod" source="{FonoPropMod}" property="text" required="true" trigger="{BtnGrabarMod}" triggerEvent="click"/>
+			<mx:EmailValidator id="emailValidatorMod" source="{emailMod}" property="text" required="true" trigger="{BtnGrabarMod}" triggerEvent="click"/>
+			
+		</fx:Array>  
+		
+		
+		<fx:Array id="validatorsArray2">
+			<mx:DateValidator id="CenFechaRecepcionValidator" source="{CenFechaRecepcion}" property="text" required="true" inputFormat="DD/MM/YYYY" trigger="{BtnGrabarCentral}" triggerEvent="click"/>                         
+			<mx:StringValidator id="CenDirCentralValidator" source="{CenDirCentral}" property="text" required="true" trigger="{BtnGrabarCentral}" triggerEvent="click"/>    
+			<mx:StringValidator id="CenNomCentralValidator" source="{CenNomCentral}" property="text" required="true" trigger="{BtnGrabarCentral}" triggerEvent="click"/>
+			<mx:DateValidator id="CenFechaPuestaServValidator" source="{CenFechaPuestaServ}" property="text" required="true" inputFormat="DD/MM/YYYY" trigger="{BtnGrabarCentral}" triggerEvent="click"/>     
+			<mx:StringValidator id="CenPropietarioValidator" source="{CenPropietario}" property="text" required="true" trigger="{BtnGrabarCentral}" triggerEvent="click"/>    
+			<mx:StringValidator id="CenUnidadesValidator" source="{CenUnidades}" property="text" required="true" trigger="{BtnGrabarCentral}" triggerEvent="click"/>
+			<mx:StringValidator id="CenPtoConexionValidator" source="{CenPtoConexion}" property="text" required="true" trigger="{BtnGrabarCentral}" triggerEvent="click"/>    
+			<mx:NumberValidator id="CenPotenciaValidator" source="{CenPotencia}" property="text"        allowNegative="true" domain="real" minValue="0.01" maxValue="9.99" required="true" trigger="{BtnGrabarCentral}" triggerEvent="click"/>   
+			<mx:NumberValidator id="CenTensionValidator" source="{CenTension}" property="text"        allowNegative="true" domain="real" minValue="0.01" maxValue="99.99" required="true" trigger="{BtnGrabarCentral}" triggerEvent="click"/>   
+			<mx:NumberValidator id="CenCapacidadValidator" source="{CenCapacidad}" property="text"        allowNegative="true" domain="real" minValue="0.01" maxValue="9.99" required="true" trigger="{BtnGrabarCentral}" triggerEvent="click"/>   
+			<mx:StringValidator id="CenAlimentadorValidator" source="{CenAlimentador}" property="text" required="true" trigger="{BtnGrabarCentral}" triggerEvent="click"/>
+			<mx:NumberValidator id="CensistemaValidator" source="{Censistema}" property="selectedIndex" minValue="0" lowerThanMinError="{Censistema.prompt}" trigger="{BtnGrabarCentral}" triggerEvent="click"/>
+			<mx:NumberValidator id="CenEnerPrimValidator" source="{CenEnerPrim}" property="selectedIndex" minValue="0" lowerThanMinError="{CenEnerPrim.prompt}" trigger="{BtnGrabarCentral}" triggerEvent="click"/>
+			<mx:NumberValidator id="CenEstadoValidator" source="{CenEstado}" property="selectedIndex" minValue="0" lowerThanMinError="{CenEstado.prompt}" trigger="{BtnGrabarCentral}" triggerEvent="click"/>
+		</fx:Array>  
+		
+		<fx:Array id="validatorsArrayEtapa">                  
+			<mx:NumberValidator id="DDlTipoEtapaValidator" source="{DDLEtaTipoEtapa}" property="selectedIndex" minValue="0" lowerThanMinError="{DDLEtaTipoEtapa.prompt}" trigger="{BtnGuaradarEtapa}" triggerEvent="click"/>   
+			<mx:StringValidator id="EtaFechaRecepcionValidator" source="{EtaFechaRecepcion}" property="text" required="true" trigger="{BtnGuaradarEtapa}" triggerEvent="click"  />  
+			<mx:StringValidator id="txtEtapaCentralValidator" source="{txtEtapaCentral}" property="text" required="true" trigger="{BtnGuaradarEtapa}" triggerEvent="click"/>                                      
+			<mx:NumberValidator id="DDLEstadoValidator" source="{CenEstadoEtapa}" property="selectedIndex" minValue="0" lowerThanMinError="{CenEstadoEtapa.prompt}" trigger="{BtnGuaradarEtapa}" triggerEvent="click"/>
+		</fx:Array>  
+		<fx:Array id="validatorsArrayEtapaMOD">               
+			<mx:NumberValidator id="DDlTipoEtapaValidatorMOD" source="{DDLEtaTipoEtapaMod}" property="selectedIndex" minValue="0" lowerThanMinError="{DDLEtaTipoEtapaMod.prompt}" trigger="{BtnGuardarEtapaMod}" triggerEvent="click"/> 
+			<mx:StringValidator id="EtaFechaRecepcionValidatorMOD" source="{EtaFechaRecepcionMod}" property="text" required="true" trigger="{BtnGuardarEtapaMod}" triggerEvent="click"  /> 
+			<mx:NumberValidator id="DDLEstadoValidatorMOD" source="{CenEstadoEtapaMod}" property="selectedIndex" minValue="0" lowerThanMinError="{CenEstadoEtapaMod.prompt}" trigger="{BtnGuardarEtapaMod}" triggerEvent="click"/>
+		</fx:Array>  
+		
+		
+	</fx:Declarations>
+	
+	
+	
+	<viewer:WidgetTemplate id="wTemplate" width="700" height="500"> 
+		<s:VGroup left="10" right="10" top="10" bottom="10">
+			<s:HGroup>
+				<s:Button label="Inicio" id="btnInicio" click="btnInicio_clickHandler(event)"/>
+				<mx:MenuBar labelField="@label" itemClick="menuHandler(event);" 
+							dataProvider="{menuBarCollection}" />
+				<!--<s:Button id="searchButton" label="Search Panel"
+				click="myViewStack.selectedChild = search;"/>-->
+				
+			</s:HGroup>
+			
+			<!-- Define the ViewStack and the three child containers and have it
+			resize up to the size of the container for the buttons. -->
+			<mx:ViewStack id="myViewStack" borderStyle="solid" width="100%" height="100%" >
+				
+				<mx:Canvas id="inicio" label="inicio" width="100%" height="100%" >
+					<mx:Label  text="Esta es la pantalla de Incio" color="#000000"/>                                  
+				</mx:Canvas>
+				
+				<!-- *****************************Listado Propietario *******************************************-->
+				
+				<mx:Canvas id="propietario"   label="propietario" width="100%" height="100%" initialize="propietario_initializeHandler(event)">
+					<s:VGroup width="100%" top="5" bottom="5" height="100%">
+						<mx:Label id="LblProp" text="Listado de propietarios" fontSize="18"/>
+						<s:HGroup width="100%" verticalAlign="middle">
+							<mx:TextInput x="10" id="txtFilterPropietario" width="100%" height="30" fontSize="14" fontWeight="bold" />
+							<mx:Image x="504" y="10" width="35" height="33"  source="assets/images/lupa_40x40.png"/>
+							<mx:Label id="label1"/>
+						</s:HGroup>
+						<mx:DataGrid id="DataPropietario" resizableColumns="true" sortableColumns="true" editable="false"  
+									 width="100%" height="100%" visible="true" selectable="true">
+							<mx:columns>        
+								<mx:DataGridColumn  dataField="OBJECTID" headerText="OBJECTID" width="30" visible="false"/>                                                         
+								<mx:DataGridColumn dataField="PROPIETARIO_PMGD" headerText="Propietario PMGD" width="50"/>
+								<mx:DataGridColumn dataField="SIGLA_PMGD" headerText="Sigla PMGD" width="50" />                                                
+								<mx:DataGridColumn dataField="RUT_PMGD" headerText="Rut PMGD" visible="true" width="50" />
+								<mx:DataGridColumn dataField="DIRECCION_PROPIETARIO" headerText="Direccion" visible="true" width="50" />
+								<mx:DataGridColumn dataField="REPRESENTANTE" headerText="Representante" visible="true" width="50" />
+								<mx:DataGridColumn dataField="TELEFONO" headerText="Telefono" visible="true" width="50" />                                                          
+								<mx:DataGridColumn dataField="EMAIL" headerText="email" visible="true" width="50" />                                                             
+							</mx:columns>
+						</mx:DataGrid>                                 
+						<s:Button id="BtnNewProp" label="Nuevo" click="BtnNewProp_clickHandler(event)"/>
+					</s:VGroup>
+				</mx:Canvas>
+				<!-- ********************************Listado Central ***************************************************-->
+				<mx:Canvas id="central"   label="Central" width="100%" height="100%" initialize="central_initializeHandler(event)" >
+					<s:VGroup width="100%" top="5" bottom="5" height="100%">
+						<mx:Label id="LblCentral" text="Listado de Centrales" fontSize="18"/>
+						<s:HGroup width="100%" verticalAlign="middle">
+							<mx:TextInput x="10" id="txtFilterCentral" width="100%" height="30" fontSize="14" fontWeight="bold" />
+							<mx:Image x="504" y="10" width="35" height="33"  source="assets/images/lupa_40x40.png"/>
+							<mx:Label id="label2"/>
+						</s:HGroup>
+						<mx:DataGrid id="DataCentral" resizableColumns="true" sortableColumns="true" editable="false"
+									 width="100%" height="100%" visible="true" selectable="true" >
+							<mx:columns>        
+								<mx:DataGridColumn  dataField="OBJECTID" headerText="OBJECTID" width="30" visible="false"/>
+								<mx:DataGridColumn  dataField="EMPRESA_ID" headerText="EMPRESA_ID" width="30" visible="false"/>
+								<mx:DataGridColumn  dataField="NOMBRE_CENTRAL" headerText="Nombre Central" width="30" />
+								<mx:DataGridColumn  dataField="NOMBRE_ALIMENTADOR" headerText="Alimentador" width="30" />
+								<mx:DataGridColumn  dataField="POTENCIA_INSTALADA" headerText="Potencia Generada" width="30" />
+								<mx:DataGridColumn  dataField="CAPACIDAD_INSTALADA" headerText="Capacidad Instalada" width="30" />
+								<mx:DataGridColumn  dataField="NOMBRE_TIPO_ENERGETICO" headerText="Nombre Tipo Energetico" width="30"/>
+								<mx:DataGridColumn  dataField="NOMBRE_ESTADO" headerText="Nombre Estado" width="30" />
+								<mx:DataGridColumn  dataField="NOMBRE_PROPIETARIO" headerText="Nombre Propietario" width="30" />
+								
+								
+							</mx:columns>
+						</mx:DataGrid>      
+						<!--
+						LimpiFormPropietario();
+						BtnGrabar.visible = true;
+						BtnModificar.visible = false;
+						myViewStack.selectedChild = NewProp;
+						
+						<s:Button id="BtnNewProp" label="Nuevo" click="BtnNewProp_clickHandler(event)"/>-->
+						<s:Button id="BtnNewCentral" label="Nuevo" click="BtnNewCentral_clickHandler(event)"/>
+					</s:VGroup>
+				</mx:Canvas>
+				
+				<!-- -*******************************************Listado Etapa ***************************************************-->
+				
+				<mx:Canvas id="etapa"  label="etapa" width="100%" height="100%" initialize="etapa_initializeHandler(event)" >
+					
+					<mx:Form width="100%" height="100%">
+						<s:HGroup width="100%" height="100%">                                                         
+							<s:VGroup width="100%" height="100%">
+								<mx:TextInput x="10" id="txtFilterEtaPropietario"  height="22" fontSize="9" fontWeight="bold" width="100%" />
+								<mx:DataGrid id="DGEtapaPorpietario" dataProvider="{coleccion}" width="100%" height="100%" click="DGEtapaPorpietario_clickHandler(event)">
+									<mx:columns>
+										<mx:DataGridColumn  dataField="OBJECTID" headerText="OBJECTID"  visible="false"/>
+										<mx:DataGridColumn  dataField="PROPIETARIO_ID" headerText="PROPIETARIO_ID"  visible="false"/>
+										<mx:DataGridColumn  dataField="PROPIETARIO_PMGD" headerText="PROPIETARIO"  visible="true" />
+									</mx:columns>
+								</mx:DataGrid>
+							</s:VGroup>                                                  
+							<s:VGroup width="100%" height="100%">
+								<mx:TextInput x="10" id="txtFilterEtaCentral2" height="22" fontSize="9" fontWeight="bold" width="100%"/>
+								<mx:DataGrid id="DGEtapaCentral" width="100%" height="100%" click="DGEtapaCentral_clickHandler(event)">
+									<mx:columns>
+										<mx:DataGridColumn  dataField="OBJECTID" headerText="OBJECTID"  visible="false"/>
+										<mx:DataGridColumn  dataField="CENTRAL_ID" headerText="CENTRAL_ID"  visible="false"/>
+										<mx:DataGridColumn  dataField="NOMBRE_CENTRAL" headerText="CENTRAL"   visible="true" />
+									</mx:columns>
+								</mx:DataGrid>
+							</s:VGroup>                                                  
+						</s:HGroup>
+						<mx:DataGrid id="DGEtapa" width="100%" height="100%">
+							<mx:columns>
+								<mx:DataGridColumn  dataField="OBJECTID" headerText="OBJECTID"  visible="false" />
+								<mx:DataGridColumn  dataField="ETAPA_ID" headerText="COD"  visible="true" width="50" />
+								<mx:DataGridColumn  dataField="NOM_ETAPA" headerText="DESCRIPCION"   visible="true" width="370"/>
+								<mx:DataGridColumn  dataField="FECHA_RECEPCION" headerText="FECHA_RECEPCION"   visible="true" width="110" />
+								<mx:DataGridColumn  dataField="ESTADO" headerText="ESTADO"   visible="true" width="100" />
+							</mx:columns>
+						</mx:DataGrid>
+						<s:HGroup  width="100%">
+							<s:HGroup horizontalAlign="left" width="100%">
+								<s:Button id="BtnNewEtapa" label="Nuevo" click="BtnNewEtapa_clickHandler(event)" enabled="false"/>                                                                                                               
+							</s:HGroup>
+							<s:HGroup horizontalAlign="right" width="100%">
+								<s:Button label="Ver PDF" id="btnVerPDF" click="cargarPDFDesdeServicio(event)"/>
+							</s:HGroup>
+						</s:HGroup>  
+					</mx:Form>   
+					
+				</mx:Canvas>
+				
+				<!-- ******************************************* NEW PROPIETARIO **************************************************-->
+				<mx:Canvas id="NewProp"  label="etapa" width="100%" height="100%">
+					<mx:Form width="100%" height="100%">
+						<mx:FormHeading label="Complete Todos los campos del formulario."/>                                              
+						
+						<mx:FormItem label="Propietario PMGD">
+							<mx:TextInput id="RazProp" width="200" text="" />
+						</mx:FormItem>
+						
+						<mx:FormItem label="Sigla PMGD">
+							<mx:TextInput id="SiglaProp" width="200"/>
+						</mx:FormItem>
+						
+						<mx:FormItem label="RUT PMGD">
+							<mx:TextInput id="RutProp" width="200" restrict="0-9,k,N,A"/>
+						</mx:FormItem>
+						<mx:FormItem label="Direccion Propietario">
+							<mx:TextInput id="DireccProp" width="200"/>
+						</mx:FormItem>
+						<mx:FormItem label="Representante">
+							<mx:TextInput id="RepreProp" width="200"/>
+						</mx:FormItem>
+						<mx:FormItem label="Teléfono">
+							<mx:TextInput id="FonoProp" width="200"/>
+						</mx:FormItem>                                                                                       
+						<mx:FormItem label="email">
+							<mx:TextInput id="email" width="200"/>
+						</mx:FormItem>                                               
+						<mx:FormItem>
+						</mx:FormItem>
+						<mx:FormItem>
+							<s:HGroup width="200" horizontalAlign="center">
+								<s:Button id="BtnGrabar"  label="Grabar" click="BtnGrabar_clickHandler(event)"/>                                                
+							</s:HGroup>                                                 
+						</mx:FormItem>
+						<s:Button id="Btnvolver" label="Volver" click="Btnvolver_clickHandler(event)"/>
+					</mx:Form>                 
+				</mx:Canvas>
+				
+				<!-- **************************************************NEW CENTRAL **********************************************-->
+				
+				<mx:Canvas id="NewCentral"  label="central" width="100%" height="100%">
+					<mx:Form id="FormCentral" width="100%" height="100%">
+						<mx:FormHeading label="Complete Todos los campos del formulario."/>
+						<mx:FormItem label="Fecha Recepcion">
+							<mx:DateField  width="200" formatString="DD/MM/YYYY" yearNavigationEnabled="true" id="CenFechaRecepcion"
+										   showToday="true"/>
+						</mx:FormItem>
+						<mx:FormItem label="Nombre Central">
+							<mx:TextInput id="CenNomCentral" width="200" maxChars="50"/>
+						</mx:FormItem>
+						<mx:FormItem label="Direccion Central">
+							<mx:TextInput id="CenDirCentral" width="200" maxChars="50"/>
+						</mx:FormItem>
+						<mx:FormItem label="Comuna">
+							<mx:TextInput id="CenComuna" width="200" maxChars="50" enabled="false"/>
+						</mx:FormItem>
+						<mx:FormItem label="Sistema">
+							<s:DropDownList id="Censistema"  width="200" selectedIndex="-1" prompt="Seleccione sistema.." dataProvider="{sistema}" labelField="descripcion"/>
+						</mx:FormItem>
+						<mx:FormItem label="Potencia Generación">
+							<mx:TextInput id="CenPotencia" width="200" maxChars="4" restrict="0-9\.\"/>
+						</mx:FormItem>
+						<mx:FormItem label="Capacidad Instalada">
+							<mx:TextInput id="CenCapacidad" width="200" maxChars="4" restrict="0-9\.\" />
+						</mx:FormItem>
+						<mx:FormItem label="Nivel Tension">
+							<mx:TextInput id="CenTension" width="200" maxChars="5" restrict="0-9\.\"/>
+						</mx:FormItem>
+						<mx:FormItem label="Tipo energetico Primario">
+							<s:DropDownList id="CenEnerPrim" width="200" dataProvider="{EnerPrim}"  enabled="true" prompt="Seleccione Tipo energía.." labelField="descripcion"/>
+						</mx:FormItem>
+						<mx:FormItem label="Alimentador">
+							<mx:TextInput id="CenAlimentador" width="200" maxChars="50" enabled="false"/>
+						</mx:FormItem>
+						<mx:FormItem label="Punto Conexion">
+							<s:HGroup width="100%">
+								<mx:TextInput id="CenPtoConexion" width="62%" enabled="false"/>
+								<s:ToggleButton id="togBtn" label="On" click="image1_clickHandler(event);" width="20%" height="24"/>
+								<!--<mx:Image  width="27" height="27"  source="assets/images/04_maps.png" click="image1_clickHandler(event)"/>-->       
+							</s:HGroup>
+							
+						</mx:FormItem>
+						<mx:FormItem label="Numero Unidades">
+							<mx:TextInput id="CenUnidades" width="200" maxChars="50" enabled="true"/>
+						</mx:FormItem>
+						<mx:FormItem label="Fecha Puesta Servicio">
+							<mx:DateField width="200" formatString="DD/MM/YYYY" yearNavigationEnabled="true" id="CenFechaPuestaServ"
+										  showToday="true"/>
+						</mx:FormItem>
+						<mx:FormItem label="Estado">
+							<s:DropDownList id="CenEstado" width="200" dataProvider="{estado}" selectedIndex="-1" labelField="descripcion" prompt="Seleccione estado.."  />
+						</mx:FormItem>
+						<mx:FormItem label="Propietario">
+							<mx:TextInput id="CenPropietario" width="200" click="CenPropietario_clickHandler(event)"/>
+							
+						</mx:FormItem>
+						<mx:FormItem label="Ubicacion Central">
+							<!-- <mx:Button id="BtnUbiCentral" label="Ubicacion Central" click="BtnUbiCentral_clickHandler(event)"/> -->
+							<s:ToggleButton id="togBtnUbicacion" label="On" click="BtnUbiCentral_clickHandler(event)" width="80" height="24"/>
+							<s:Label id="lblCoordx" text="X: 0"/>                       
+							<s:Label id="lblCoordy" text="Y: 0"/>          
+						</mx:FormItem>
+						
+						<mx:FormItem>
+						</mx:FormItem>
+						<mx:FormItem>
+							<s:HGroup width="200" horizontalAlign="center">
+								<s:Button id="BtnGrabarCentral" label="Grabar" click="BtnGrabarCentral_clickHandler(event)"/>                                         
+								<s:Button id="BtnCancelar2" label="Cancelar"/>                    
+							</s:HGroup>                                                 
+						</mx:FormItem>
+						<s:Button id="Btnvolver2" label="Volver" click="Btnvolver2_clickHandler(event)"/>
+						
+						
+					</mx:Form>
+					
+					
+				</mx:Canvas>
+				<!-- **************************************************NEW ETAPA **********************************************-->
+				<mx:Canvas id="NewEtapa"  label="etapa" width="100%" height="100%">
+					<mx:Form id="FormEtapa" width="100%" height="100%">
+						<mx:FormHeading label="Complete Todos los campos del formulario."/>
+						<mx:FormItem label="Tipo energetico Primario">
+							<s:DropDownList id="DDLEtaTipoEtapa" width="400"  enabled="true" prompt="Seleccione una etapa" initialize="EtaTipoEtapa_initializeHandler(event)" />
+						</mx:FormItem>
+						<mx:FormItem label="Fecha Recepcion">
+							<mx:DateField width="200" formatString="DD/MM/YYYY" yearNavigationEnabled="true" id="EtaFechaRecepcion"
+										  showToday="true"/>
+						</mx:FormItem>      
+						<mx:FormItem label="Central">
+							<mx:TextInput id="txtEtapaCentral" width="200" text="{Generica.CentralWinNombre}" enabled="false"/>                                                 
+						</mx:FormItem>
+						<mx:FormItem label="Propietario">
+							<mx:TextInput id="txtEtapaPropietario" width="200" text="{Generica.CentralWinPropietarioNombre}" enabled="false"/>                                                   
+						</mx:FormItem>
+						<mx:FormItem label="Estado">
+							<s:DropDownList id="CenEstadoEtapa" dataProvider="{estado}" labelField="descripcion" selectedIndex="-1" prompt="Seleccione un Estado"  width="200" initialize="CenEstadoEtapa_initializeHandler(event)" />
+						</mx:FormItem>
+						<mx:FormItem label="Documento PDF">
+							<mx:Button id="BtnAdjuntarPDF" label="Adjuntar" click="BtnAdjuntarPDF_clickHandler(event)" enabled="false"/>
+							
+							<s:Label id="LblNomPDF"/>         
+							
+						</mx:FormItem>
+						<mx:FormItem>
+							<s:HGroup>
+								<s:HGroup horizontalAlign="left">
+									<s:Button id="BtnGuaradarEtapa" label="Guardar" click="BtnGuardarEtapa_clickHandler(event)"/>      
+									<s:Button id="BtnGuardarPDF" label="Guardar PDF" click="BtnGuardarPDF_clickHandler(event)" enabled="false"/>  
+								</s:HGroup>
+								<s:HGroup horizontalAlign="right">
+									<s:Button id="BtnVolverEtapa" label="Volver" click="BtnVolverEtapa_clickHandler(event)" /> 
+								</s:HGroup>
+							</s:HGroup>
+						</mx:FormItem>
+						
+					</mx:Form>
+				</mx:Canvas>
+				<!-- ******************************************* MOD PROPIETARIO **************************************************-->
+				<mx:Canvas id="ModProp"  label="etapa" width="100%" height="100%">
+					<mx:Form width="100%" height="100%">
+						<mx:FormHeading label="Complete Todos los campos del formulario."/>                                              
+						
+						<mx:FormItem label="Propietario PMGD">
+							<mx:TextInput id="RazPropMod" width="200" text="" />
+						</mx:FormItem>
+						
+						<mx:FormItem label="Sigla PMGD">
+							<mx:TextInput id="SiglaPropMod" width="200"/>
+						</mx:FormItem>
+						
+						<mx:FormItem label="RUT PMGD">
+							<mx:TextInput id="RutPropMod" width="200" restrict="0-9,k,N,A"/>
+						</mx:FormItem>
+						<mx:FormItem label="Direccion Propietario">
+							<mx:TextInput id="DireccPropMod" width="200"/>
+						</mx:FormItem>
+						<mx:FormItem label="Representante">
+							<mx:TextInput id="ReprePropMod" width="200"/>
+						</mx:FormItem>
+						<mx:FormItem label="Teléfono">
+							<mx:TextInput id="FonoPropMod" width="200"/>
+						</mx:FormItem>                                                                                       
+						<mx:FormItem label="email">
+							<mx:TextInput id="emailMod" width="200"/>
+						</mx:FormItem>                                               
+						<mx:FormItem>
+						</mx:FormItem>
+						<mx:FormItem>
+							<s:HGroup width="200" horizontalAlign="center">
+								<s:Button id="BtnGrabarMod"  label="Grabar Modificaciones" click="BtnGrabarMod_clickHandler(event)"/>                                                  
+							</s:HGroup>                                                 
+						</mx:FormItem>
+						<s:Button id="BtnvolverProp" label="Volver" click="Btnvolver_clickHandler(event)"/>
+					</mx:Form>                 
+				</mx:Canvas>
+				
+				<!-- **************************************************MOD CENTRAL **********************************************-->
+				
+				<mx:Canvas id="ModCentral"  label="central" width="100%" height="100%">
+					<mx:Form id="FormCentralMod" width="100%" height="100%">
+						<mx:FormHeading label="Complete Todos los campos del formulario."/>
+						<mx:FormItem label="Fecha Recepcion">
+							<mx:DateField  width="200" formatString="DD/MM/YYYY" yearNavigationEnabled="true" id="CenFechaRecepcionMod"
+										   showToday="true"/>
+						</mx:FormItem>
+						<mx:FormItem label="Nombre Central">
+							<mx:TextInput id="CenNomCentralMod" width="200" maxChars="50"/>
+						</mx:FormItem>
+						<mx:FormItem label="Direccion Central">
+							<mx:TextInput id="CenDirCentralMod" width="200" maxChars="50"/>
+						</mx:FormItem>
+						<mx:FormItem label="Comuna">
+							<mx:TextInput id="CenComunaMod" width="200" maxChars="50" enabled="false"/>
+						</mx:FormItem>
+						<mx:FormItem label="Sistema">
+							<s:DropDownList id="CensistemaMod"  width="200" selectedIndex="-1" prompt="Seleccione sistema.." labelField="descripcion" dataProvider="{sistema}"/>
+						</mx:FormItem>
+						<mx:FormItem label="Potencia Generación">
+							<mx:TextInput id="CenPotenciaMod" width="200" maxChars="4" restrict="0-9\.\"/>
+						</mx:FormItem>
+						<mx:FormItem label="Capacidad Instalada">
+							<mx:TextInput id="CenCapacidadMod" width="200" maxChars="4" restrict="0-9\.\" />
+						</mx:FormItem>
+						<mx:FormItem label="Nivel Tension">
+							<mx:TextInput id="CenTensionMod" width="200" maxChars="5" restrict="0-9\.\"/>
+						</mx:FormItem>
+						<mx:FormItem label="Tipo energetico Primario">
+							<s:DropDownList id="CenEnerPrimMod" width="200" labelField="descripcion"  enabled="true" prompt="Seleccione Tipo energía.." selectedIndex="-1" dataProvider="{EnerPrim}"/><!--initialize="CenEnerPrim_initializeHandler(event)"-->
+						</mx:FormItem>
+						<mx:FormItem label="Alimentador">
+							<mx:TextInput id="CenAlimentadorMod" width="200" maxChars="50" enabled="false"/>
+						</mx:FormItem>
+						<mx:FormItem label="Punto Conexion">
+							<s:HGroup width="100%">
+								<mx:TextInput id="CenPtoConexionMod" width="62%" enabled="false"/>
+								<s:ToggleButton id="togBtnMod" label="On" click="image1_clickHandler(event);" width="20%" height="24"/>
+								<!--<mx:Image4  width="27" height="27"  source="assets/images/04_maps.png" click="image1_clickHandler(event)"/>-->       
+							</s:HGroup>
+							
+						</mx:FormItem>
+						<mx:FormItem label="Numero Unidades">
+							<mx:TextInput id="CenUnidadesMod" width="200" maxChars="50" enabled="true"/>
+						</mx:FormItem>
+						<mx:FormItem label="Fecha Puesta Servicio">
+							<mx:DateField width="200" formatString="DD/MM/YYYY" yearNavigationEnabled="true" id="CenFechaPuestaServMod"
+										  showToday="true"/>
+						</mx:FormItem>
+						<mx:FormItem label="Estado">
+							<s:DropDownList id="CenEstadoMod" width="200" dataProvider="{estado}" selectedIndex="-1" labelField="descripcion" prompt="Seleccione estado.." />
+						</mx:FormItem>
+						<mx:FormItem label="Propietario">
+							<mx:TextInput id="CenPropietarioMod" width="200" click="CenPropietario_clickHandler(event)"/>
+							
+						</mx:FormItem>
+						<mx:FormItem label="Ubicacion Central">
+							<!-- <mx:Button id="BtnUbiCentral" label="Ubicacion Central" click="BtnUbiCentral_clickHandler(event)"/> -->
+							<s:ToggleButton id="togBtnUbicacionMod" label="On" click="BtnUbiCentral_clickHandler(event)" width="80" height="24"/>
+							<s:Label id="lblCoordxMod" text="X: 0"/>                       
+							<s:Label id="lblCoordyMod" text="Y: 0"/>          
+						</mx:FormItem>
+						
+						<mx:FormItem>
+						</mx:FormItem>
+						<mx:FormItem>
+							<s:HGroup width="200" horizontalAlign="center">
+								<s:Button id="BtnGrabarCentralMod" label="Grabar" click="BtnGrabarCentral_clickHandler(event)"/>                                         
+								<s:Button id="BtnCancelar2Mod" label="Cancelar"/>                    
+							</s:HGroup>                                                 
+						</mx:FormItem>
+						<s:Button id="Btnvolver2Mod" label="Volver" click="Btnvolver2_clickHandler(event)"/>
+												
+					</mx:Form>				
+					
+				</mx:Canvas>
+				<!-- ******************************************* MOD ETAPA **************************************************-->
+				<mx:Canvas id="ModEtapa"  label="etapa" width="100%" height="100%" >
+					<mx:Form width="100%" height="100%">
+						<mx:FormHeading label="Modificacion Etapa, Complete Todos los campos del formulario."/>
+						
+						<mx:FormItem label="Tipo energetico Primario">
+							<s:DropDownList id="DDLEtaTipoEtapaMod" width="400" dataProvider="{DataTipoEtapa}" enabled="true" prompt="Seleccione una etapa" labelField="descripcion" initialize="EtaTipoEtapa_initializeHandler(event)" />
+						</mx:FormItem>
+						<mx:FormItem label="Fecha Recepcion">
+							<mx:DateField width="200" yearNavigationEnabled="true" id="EtaFechaRecepcionMod" showToday="true"  />
+						</mx:FormItem>      
+						<mx:FormItem label="Central">
+							<mx:TextInput id="txtEtapaCentralMod" width="200" text="{Generica.CentralWinNombre}" enabled="false"/>                                                 
+						</mx:FormItem>
+						<mx:FormItem label="Propietario">
+							<mx:TextInput id="txtEtapaPropietarioMod" width="200" enabled="false" text="{Generica.CentralWinPropietarioNombre}"/>                                                   
+						</mx:FormItem>
+						<mx:FormItem label="Estado">
+							<s:DropDownList id="CenEstadoEtapaMod" dataProvider="{estado}" labelField="descripcion" selectedIndex="-1" prompt="Seleccione un Estado"  width="200" initialize="CenEstadoEtapa_initializeHandler(event)" />
+						</mx:FormItem>
+						<mx:FormItem label="Documento PDF">
+							<mx:Button id="BtnAdjuntarPDFMod" label="Adjuntar" click="BtnAdjuntarPDFMod_clickHandler(event)" enabled="true"/>
+						    <s:Label id="LblNomPDFMod" text="{Generica.EtapaNomPDF}"/>					
+					    
+						</mx:FormItem>
+						<mx:FormItem>
+							<s:HGroup>
+								<s:HGroup horizontalAlign="left">
+									<s:Button id="BtnGuardarEtapaMod" label="Guardar" click="BtnGuardarEtapaMod_clickHandler(event)"/>   
+									<s:Button id="BtnGuardarPDFMod" label="Guardar PDF" click="BtnGuardarPDFMod_clickHandler(event)"/> 
+								</s:HGroup>
+								<s:HGroup horizontalAlign="right">
+									<s:Button id="BtnVolverEtapaMod" label="Volver" click="BtnVolverEtapa_clickHandler(event)" /> 
+								</s:HGroup>
+							</s:HGroup>
+						</mx:FormItem>
+						
+					</mx:Form>
+				</mx:Canvas>
+			</mx:ViewStack>            
+		</s:VGroup>
+		
+	</viewer:WidgetTemplate>
+	
+</viewer:BaseWidget>
+
+
+
+
+
+
+

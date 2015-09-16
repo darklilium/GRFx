@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<viewer:BaseWidget xmlns:fx="http://ns.adobe.com/mxml/2009"
+				   xmlns:s="library://ns.adobe.com/flex/spark"
+				   xmlns:mx="library://ns.adobe.com/flex/mx"
+				   xmlns:viewer="com.esri.viewer.*"
+				   xmlns:util="widgets.StreetView.util.*"
+				   x="600" y="300">
+				   	
+	<fx:Script>
+		<![CDATA[
+			import flash.net.navigateToURL;
+			
+			import mx.controls.Alert;
+						
+			public var nFoto:String;
+			public var nSSEE:String;
+			
+			protected function abrirVentanaExterna_clickHandler(event:MouseEvent):void
+			{
+				 nFoto=txtNumFoto.text;
+				 nSSEE= txtNombreSSEE.text;
+				
+				
+				var url:String = "widgets/InterfazExterna/GISRED360/index.html";
+				var variables:URLVariables = new URLVariables();
+				//variables.numeroFoto = nFoto;
+				variables.nombreSSEE = nSSEE;
+				var request:URLRequest = new URLRequest(url);
+				request.data = variables;
+				try {            
+					navigateToURL(request, url);
+				}
+				catch (e:Error) {
+					// handle error here
+					Alert.show(e.toString());
+				}
+				
+			}
+			
+			
+		
+			
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+	
+	</fx:Declarations>
+	<viewer:WidgetTemplate id="wTemplate">
+		<mx:VBox>
+			<s:Label text="Indique nombre SSEE:">	
+			</s:Label>
+			<mx:TextInput id="txtNombreSSEE" text="PLACILLA"/>
+			<s:Label text="Indique numero de Foto:">	
+			</s:Label>
+			<mx:TextInput id="txtNumFoto" text="1"/>	
+			<s:Button id="abrirVentanaExterna" label="Open HTML"
+					  click="abrirVentanaExterna_clickHandler(event)" />
+		</mx:VBox>
+		
+		
+		
+	</viewer:WidgetTemplate>
+	
+						   
+	
+</viewer:BaseWidget>

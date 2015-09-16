@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<viewer:BaseWidget xmlns:esri="http://www.esri.com/2008/ags"
+				   xmlns:fx="http://ns.adobe.com/mxml/2009"
+				   xmlns:s="library://ns.adobe.com/flex/spark"
+				   xmlns:mx="library://ns.adobe.com/flex/mx"
+				   xmlns:mxeffects="com.adobe.ac.mxeffects.*"
+				   xmlns:flash="flash.text.*"
+				   xmlns:viewer="com.esri.viewer.*"
+				   xmlns:widgets="widgets.*"
+				   x="600" y="300"
+				   widgetConfigLoaded="init()">
+	
+	<fx:Script>
+		<![CDATA[
+			import com.esri.ags.Graphic;
+			import com.esri.ags.Units;
+			import com.esri.ags.components.supportClasses.IntegerField;
+			import com.esri.ags.events.AttachmentEvent;
+			import com.esri.ags.geometry.Extent;
+			import com.esri.ags.geometry.Geometry;
+			import com.esri.ags.geometry.MapPoint;
+			import com.esri.ags.geometry.Polyline;
+			import com.esri.ags.layers.FeatureLayer;
+			import com.esri.ags.layers.GraphicsLayer;
+			import com.esri.ags.layers.supportClasses.FeatureEditResult;
+			import com.esri.ags.symbols.SimpleLineSymbol;
+			import com.esri.ags.symbols.SimpleMarkerSymbol;
+			import com.esri.ags.symbols.TextSymbol;
+			import com.esri.ags.utils.GeometryUtil;
+			import com.esri.ags.utils.GraphicUtil;
+			import com.esri.ags.utils.WebMercatorUtil;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.rpc.AsyncResponder;
+			import mx.rpc.events.FaultEvent;
+			
+			
+			private var featureLayer:FeatureLayer;	
+			private var fr:FileReference;
+			var myByteArray:ByteArray;
+			
+			protected function init():void
+			{
+				featureLayer = new FeatureLayer("http://gisred.chilquinta/arcgis/rest/services/PMGD/PMGD/FeatureServer/8");
+				
+				
+			}
+				
+			protected function wTemplate_closedHandler(event:Event):void
+			{
+				
+			}
+			
+			
+			protected function wTemplate_openHandler(event:Event):void
+			{
+				
+			}
+			
+			
+			protected function btnLoadFile_clickHandler(event:MouseEvent):void
+			{
+				var fileFilter:FileFilter = null;
+				
+				
+				fileFilter = new FileFilter(".pdf Files Only", "*.pdf");
+				
+				fr = new FileReference;
+				fr.addEventListener(Event.SELECT, dataFileSelected);
+				fr.browse([fileFilter]);
+			}
+			
+			protected function dataFileSelected(event:Event):void
+			{
+				fr.removeEventListener(Event.SELECT,dataFileSelected);
+				
+				//listen for when the file has loaded
+				fr.addEventListener(Event.COMPLETE, uploadCompleteHandler);
+				
+				//listen for any errors reading the file
+				fr.addEventListener(IOErrorEvent.IO_ERROR, onLoadError);
+				
+				//upload select file
+				fr.load();
+			}
+			
+			private function onLoadError(error:IOErrorEvent):void
+			{
+				Alert.show("Error loading file : " + error.text);			
+			}
+			protected function uploadCompleteHandler(event:Event):void
+			{
+				fr.removeEventListener(Event.COMPLETE, uploadCompleteHandler);
+				
+				//Display the name of the selected file
+				inputNameLbl.text = fr.name;
+				
+				//Covert the file into a byteArray
+				myByteArray =  new ByteArray(); 
+				myByteArray = fr.data as ByteArray;
+			}
+			protected function btnUploadFile_clickHandler(event:MouseEvent):void
+			{
+				//Add attachments
+								
+				featureLayer.addAttachment(1,myByteArray,inputNameLbl.text,"pdf",new AsyncResponder(onResult,onFault));
+			}
+			
+			protected function onResult(event:FeatureEditResult, token:Object = null):void
+			{
+					Alert.show("Success");		
+			}
+			protected function onFault(event:FaultEvent, token:Object = null):void
+			{
+				Alert.show("Failed");	
+			}
+			
+			
+			
+		]]>
+	</fx:Script>
+	
+	
+	
+	
+	<fx:Declarations>
+		<s:GlowFilter id="glowFilter"
+					  alpha="1"
+					  color="{getStyle('focusColor')}"
+					  
+					  inner="true"
+					  strength="2"/>
+		
+	</fx:Declarations>
+	
+	<viewer:WidgetTemplate id="wTemplate"
+						   width="400" height="200"
+						   closed="wTemplate_closedHandler(event)"
+						   open="wTemplate_openHandler(event)"
+						   minHeight="200"
+						   minWidth="400"
+						   >
+		<s:VGroup>
+			
+			<mx:Spacer height="10"/>
+			
+			<mx:Spacer height="5"/>
+			<s:Label id="inputNameLbl" />
+			<s:Button id="btnLoadFile" label="Load Text File" click="btnLoadFile_clickHandler(event)"/>
+			<s:Button id="btnUploadFile" label="Upload Text File" click="btnUploadFile_clickHandler(event)"/>
+		</s:VGroup>
+		
+	</viewer:WidgetTemplate>
+</viewer:BaseWidget>

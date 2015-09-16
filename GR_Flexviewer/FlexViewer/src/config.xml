@@ -1,0 +1,244 @@
+<?xml version="1.0" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////
+//
+// Read more about ArcGIS Viewer for Flex - http://links.esri.com/flexviewer
+//
+////////////////////////////////////////////////////////////////////////////////
+-->
+<configuration>
+    <title>ArcGIS Viewer for Flex</title>
+    <subtitle>a configurable web mapping application</subtitle>
+    <logo>assets/images/logo.png</logo>
+    <style>
+        <colors>0xFFFFFF,0x333333,0x101010,0x000000,0xFFD700</colors>
+        <alpha>0.8</alpha>
+    </style>
+    <!-- replace the following url with your own geometryservice -->
+    <geometryservice url="http://tasks.arcgisonline.com/ArcGIS/rest/services/Geometry/GeometryServer" />
+
+
+    <!-- UI elements -->
+    <widget left="10"  top="50"    config="widgets/Navigation/NavigationWidget.xml" url="widgets/Navigation/NavigationWidget.swf"/>
+    <widget right="0" bottom="0"   config="widgets/OverviewMap/OverviewMapWidget.xml" url="widgets/OverviewMap/OverviewMapWidget.swf"/>
+    <widget right="20" top="55"    config="widgets/MapSwitcher/MapSwitcherWidget.xml" url="widgets/MapSwitcher/MapSwitcherWidget.swf"/>
+    <widget left="0"   top="0"     config="widgets/HeaderController/HeaderControllerWidget.xml" url="widgets/HeaderController/HeaderControllerWidget.swf"/>
+
+    <map wraparound180="true" initialextent="-8007585.32657955 -3933739.55021092 -7879323.993116975 -3862041.617679396" top="40" addarcgisbasemaps="true"  wkid="102100">
+        <basemaps>
+        <layer type="dynamic" label="Local Landbase" icon="assets/images/mapabase.png" url="http://gisred.chilquinta/arcgis/rest/services/MapaBase/MapServer" visible="true"/>
+        
+        </basemaps>
+        
+        <operationallayers>
+            <layer type="dynamic"
+     			label="ECSE"
+     			imageformat="png32"
+     			url="http://gisred.chilquinta/arcgis/rest/services/Varios/ECSE/MapServer"
+     			visible="false">
+     		</layer>  
+     		
+     		<layer type="dynamic"
+     			label="Vialidad"
+     			imageformat="png32"
+     			url="http://wservice-sit.mop.gov.cl/ArcGIS/rest/services/DV/red_caminera_de_chile/MapServer"
+     			visible="false">
+     		</layer>  
+    
+        	<layer type="dynamic"
+			           label="Luminarias" 
+			           imageformat="png32"
+			           url="http://gisred.chilquinta/arcgis/rest/services/Chilquinta_006/Luminarias/MapServer" 
+			           visible="true">       			
+       		</layer>
+       		<layer type="dynamic"
+			           label="Ingreso Externo" 
+			           imageformat="png32"
+			           url="http://gisred.chilquinta/arcgis/rest/services/Mobile/Ingreso_externo_nuevo/MapServer" 
+			           visible="true">       			
+       		</layer>
+       		
+        	<layer type="dynamic"
+			           label="Linea Gas" 
+			           imageformat="png32"
+			           url="http://gisred.chilquinta/arcgis/rest/services/Varios/GAS/MapServer" 
+			           visible="true"
+			           info="widgets/InfoTemplates/AttRelateInfoWinWidget.swf"
+                 	   infoconfig="widgets/InfoTemplates/IWT_Cameras.xml"
+			           >
+			 </layer>          
+			<layer type="dynamic"
+			           label="PMGD" 
+			           imageformat="png32"
+			           url="http://gisred.chilquinta/arcgis/rest/services/PMGD/PMGD/MapServer" 
+			           visible="true"
+			                   	   
+			           >          			
+       		</layer>
+           <!-- <layer type="dynamic"  imageformat="png32" label="Clientes1" url="http://gisred.chilquinta/arcgis/rest/services/Chilquinta_006/Clientes/MapServer" visible="false"/> -->        
+            <layer type="dynamic"  imageformat="png32" label="Clientes" url="http://gisred.chilquinta/arcgis/rest/services/Chilquinta_006/ClientesV2/MapServer" visible="true">
+            	<sublayer id="0" /></layer>
+            <layer type="dynamic"  imageformat="png32" label="Direcciones" url="http://gisred.chilquinta/arcgis/rest/services/Cartografia/DMPS/MapServer" mode="onDemand" visible="true">
+             	<sublayer id="0" label="Direcciones" /></layer>
+            <layer type="dynamic" label="Concesiones" imageformat="png32" url="http://gisred.chilquinta/arcgis/rest/services/Chilquinta_006/Concesiones006/MapServer" alpha="0.4" visible="true">
+            	<sublayer id="0"/>
+                <sublayer id="1" />
+            </layer>
+             <layer type="dynamic"
+     			label="Nodos"
+     			imageformat="png32"
+     			url="http://gisred.chilquinta/arcgis/rest/services/Chilquinta_006/Nodos_006/MapServer"
+     			visible="true">
+     			 <sublayer id="0" label="Postes" />
+     		</layer>
+            <layer type="dynamic"     		
+     			label="Tramos"
+     			imageformat="png32"
+     			url="http://gisred.chilquinta/arcgis/rest/services/Chilquinta_006/Tramos_006/MapServer"
+     			visible="true">
+     			 <sublayer id="0" label="Tramos MT" />
+     			 <sublayer id="1" label="Tramos BT"/>
+     			 <sublayer id="2" label="Tramo AP" />
+     		</layer>
+     		
+     		<layer type="dynamic"
+     			label="Equipos Pto"
+     			imageformat="png32"
+     			url="http://gisred.chilquinta/arcgis/rest/services/Chilquinta_006/Equipos_pto_006/MapServer"
+     			visible="true">
+     			  <sublayer id="0" label="SSEE"/>
+     			  <sublayer id="1" label="Subestaciones" />
+     			  <sublayer id="2" label="Salida Alimentador" />
+     			  <sublayer id="3" label="Equipos_pto" />
+     		</layer>
+     		
+     			<layer type="dynamic"
+     			label="Equipos linea"
+     			imageformat="png32"
+     			url="http://gisred.chilquinta/arcgis/rest/services/Chilquinta_006/Equipos_Linea_006/MapServer"
+     			visible="true">
+     			<sublayer id="0" label="Equipos" />
+     			<sublayer id="1" label="Equipos_AP" />
+     		</layer> 
+     		
+		     <layer type="dynamic" label="STx" imageformat="png32" url="http://gisred.chilquinta/arcgis/rest/services/STx/STx/MapServer" visible="true"/>
+		    <layer type="dynamic"
+			           label="Vistas" 
+			           imageformat="png32"
+			           url="http://gisred.chilquinta/arcgis/rest/services/Chilquinta_006/Especiales006/MapServer" 
+			           visible="true">	            
+       			</layer>
+       			
+       		
+        </operationallayers>
+    </map>
+
+    <!-- widgets organized into widget containers that manage close/open etc -->
+    <!-- supported layout property options: horizontal(default)|float|vertical|fix-->
+    <widgetcontainer layout="float">
+       <widget label="Layers" left="80" top="280"
+                icon="assets/images/i_search.png"
+                config="widgets/LayerList/LayerListWidget.xml"
+                url="widgets/LayerList/LayerListWidget.swf"/>
+        <widget label="Search" left="80" top="280"
+                icon="assets/images/i_search.png"
+                config="widgets/Search/SearchWidget_Louisville.xml"
+                url="widgets/Search/SearchWidget.swf"/>
+        <widget label="Earthquakes (GeoRSS)" left="410" top="280"
+                icon="assets/images/i_rss.png"
+                config="widgets/GeoRSS/GeoRSSWidget.xml"
+                url="widgets/GeoRSS/GeoRSSWidget.swf"/>
+        <widget label="Draw" left="60" top="400"
+                icon="assets/images/i_draw2.png"
+                config="widgets/Draw/DrawWidget.xml"
+                url="widgets/Draw/DrawWidget.swf"/>
+                
+        <widget label="Print" left="390" top="400"
+                icon="assets/images/i_print.png"
+                config="widgets/Print/PrintWidget.xml"
+                url="widgets/Print/PrintWidget.swf"/>
+                
+        <widget label="StreetView" left="390" top="400"
+                icon="assets/images/i_bookmark.png"
+                config="widgets/StreetView/StreetViewWidget.xml"
+                url="widgets/StreetView/StreetViewWidget.swf"/>
+                
+        <widget label="GISRED 360" left="390" top="400"
+                icon="assets/images/i_rss.png"
+                config="widgets/GISRED360/GISRED360_Widget.xml"
+                url="widgets/GISRED360/GISRED360_Widget.swf"/>
+                
+        <widget label="Test" left="390" top="400"
+                icon="assets/images/i_draw2.png"
+                config="widgets/Test/TestWidget.xml"
+                url="widgets/Test/TestWidget.swf"/>
+                
+        <widget label="BusquedaExcel" left="390" top="400"
+                icon="assets/images/i_print.png"
+                config="widgets/BusquedaExcel/BusquedaExcel.xml"
+                url="widgets/BusquedaExcel/BusquedaExcel.swf"/>   
+     
+                    
+         <widget label="PMGD" left="390" top="400"
+                icon="assets/images/i_bookmark.png"
+                config="widgets/Pmgd/Pmgd.xml"
+                url="widgets/Pmgd/Pmgd.swf"/>  
+                       
+        <widget label="PMGD2" left="390" top="400"
+                icon="assets/images/i_print.png"
+                config="widgets/Pmgd2/Pmgd.xml"
+                url="widgets/Pmgd2/PMGD.swf"/>   
+                
+       <widget label="AdmIngresoClientes" left="390" top="400"
+                icon="assets/images/i_bookmark.png"
+                config="widgets/AdmIngresoClientes/AdmIngresoClientes.xml"
+                url="widgets/AdmIngresoClientes/AdmIngresoClientes.swf"/> 
+                
+       <widget label="Mantenimiento Inspecciones" left="390" top="400"
+                icon="assets/images/i_print.png"
+                config="widgets/Mantenimiento_inspecciones/Inspecciones.xml"
+                url="widgets/Mantenimiento_inspecciones/Inspecciones.swf"/> 
+                
+      <widget label="Venta Empalmes" left="390" top="400"
+                icon="widgets/VentaEmpalmes/images/ventaEmpalmes.png"
+                config="widgets/VentaEmpalmes/VentaEmpalmes.xml"
+                url="widgets/VentaEmpalmes/VentaEmpalmes.swf"/>           
+                
+    <widgetgroup label="Mantenimiento de Podas" icon="widgets/MantenimientoPodas/images/poda_white.png" >
+        	 
+        	 <widget label="Gestión de Solicitudes" left="390" top="400"
+                icon="widgets/MantenimientoPodas/images/contrato_icon.png"
+                config="widgets/MantenimientoPodas/SolicitudPodas.xml"
+                url="widgets/MantenimientoPodas/GestionSolicitudes.swf"/>
+        	
+        	 <widget label="Gestión de Actividades" left="390" top="400"
+                icon="widgets/MantenimientoPodas/images/contrato_icon2.png"
+                config="widgets/MantenimientoPodas/SolicitudPodas.xml"
+                url="widgets/MantenimientoPodas/GestionActividades.swf"/>
+        	
+        	<widget label="Gestión de Cierre" left="390" top="400"
+                icon="widgets/MantenimientoPodas/images/sol_icon.png"
+                config="widgets/MantenimientoPodas/SolicitudPodas.xml"
+                url="widgets/MantenimientoPodas/gestionCierreSolicitud.swf"/>
+            
+             <widget label="Gestión de Contratos" left="390" top="400"
+                icon="widgets/MantenimientoPodas/images/sol_icon2.png"
+                config="widgets/MantenimientoPodas/SolicitudPodas.xml"
+                url="widgets/MantenimientoPodas/GestionContratos.swf"/>  
+          
+        
+         <widget label="Ingreso Clientes" left="390" top="400"
+                icon="widgets/IngresoClientes/images/icon_addCliente.png"
+                config="widgets/IngresoClientes/IngresoClientes.xml"
+                url="widgets/IngresoClientes/IngresoClientes.swf"/>  
+        </widgetgroup>      
+                          
+        <!--
+        <widget label="My first widget"
+                icon="assets/images/i_widget.png"
+                config="widgets/Samples/HelloWorld/HelloWorldWidget.xml"
+                url="widgets/Samples/HelloWorld/HelloWorldWidget.swf"/>
+        -->
+    </widgetcontainer>
+    
+</configuration>

@@ -1,0 +1,1511 @@
+<?xml version="1.0" encoding="utf-8"?>
+<viewer:BaseWidget xmlns:fx="http://ns.adobe.com/mxml/2009"
+				   xmlns:s="library://ns.adobe.com/flex/spark"
+				   xmlns:mx="library://ns.adobe.com/flex/mx"
+				   xmlns:viewer="com.esri.viewer.*"
+				   xmlns:esri="http://www.esri.com/2008/ags"
+				   xmlns:components="Components.*"
+				   xmlns:SKIN="widgets.Pmgd.Skin.*"
+				   xmlns:components1="com.esri.viewer.components.*"
+				   creationComplete="init()" xmlns:Propietario="widgets.Pmgd.Skin.Propietario.*" 
+				   xmlns:Central="widgets.Pmgd.Skin.Central.*" 
+				   xmlns:Etapa="widgets.Pmgd.Skin.Etapa.*">
+	
+	
+	<viewer:states>
+		<s:State name="bkmInit"/>
+		<s:State name="bkmListPropietario"/>
+		<s:State name="bkmAddPropietario"/>
+		<s:State name="bkmModPropietario"/>
+		<s:State name="bkmListCentral"/>
+		<s:State name="bkmListEtapa"/>
+		<s:State name="bkmAddCentral"/>
+		<s:State name="bkmModCentral"/>
+	</viewer:states>
+	<viewer:transitions>
+		<s:Transition autoReverse="true" toState="*">
+			<s:Fade targets="{[bkmInit,bkmListPropietario,bkmListEtapa, bkmListCentral, bkmAddCentral,bkmModCentral]}"/>
+		</s:Transition>
+	</viewer:transitions>
+	<fx:Declarations>
+		
+		<s:DateTimeFormatter id="dateFormatter" dateTimePattern="dd/MM/yyyy"/>
+		
+		<fx:Array id="validatorsArray2">
+			<mx:DateValidator id="CenFechaRecepcionValidator" source="{CenFechaRecepcion}" property="text" required="true" inputFormat="DD/MM/YYYY" trigger="{BtnGrabarCentral}" triggerEvent="click"/>                         
+			<mx:StringValidator id="CenDirCentralValidator" source="{CenDirCentral}" property="text" required="true" trigger="{BtnGrabarCentral}" triggerEvent="click"/>    
+			<mx:StringValidator id="CenNomCentralValidator" source="{CenNomCentral}" property="text" required="true" trigger="{BtnGrabarCentral}" triggerEvent="click"/>
+			<mx:DateValidator id="CenFechaPuestaServValidator" source="{CenFechaPuestaServ}" property="text" required="true" inputFormat="DD/MM/YYYY" trigger="{BtnGrabarCentral}" triggerEvent="click"/>     
+			<mx:StringValidator id="CenPropietarioValidator" source="{CenPropietario}" property="text" required="true" trigger="{BtnGrabarCentral}" triggerEvent="click"/>    
+			<mx:StringValidator id="CenUnidadesValidator" source="{CenUnidades}" property="text" required="true" trigger="{BtnGrabarCentral}" triggerEvent="click"/>
+			<mx:StringValidator id="CenPtoConexionValidator" source="{CenPtoConexion}" property="text" required="true" trigger="{BtnGrabarCentral}" triggerEvent="click"/>    
+			<mx:NumberValidator id="CenPotenciaValidator" source="{CenPotencia}" property="text"        allowNegative="true" domain="real" minValue="0.01" maxValue="9.99" required="true" trigger="{BtnGrabarCentral}" triggerEvent="click"/>   
+			<mx:NumberValidator id="CenTensionValidator" source="{CenTension}" property="text"        allowNegative="true" domain="real" minValue="0.01" maxValue="99.99" required="true" trigger="{BtnGrabarCentral}" triggerEvent="click"/>   
+			<mx:NumberValidator id="CenCapacidadValidator" source="{CenCapacidad}" property="text"        allowNegative="true" domain="real" minValue="0.01" maxValue="9.99" required="true" trigger="{BtnGrabarCentral}" triggerEvent="click"/>   
+			<mx:StringValidator id="CenAlimentadorValidator" source="{CenAlimentador}" property="text" required="true" trigger="{BtnGrabarCentral}" triggerEvent="click"/>
+			<mx:NumberValidator id="CensistemaValidator" source="{Censistema}" property="selectedIndex" minValue="0" lowerThanMinError="{Censistema.prompt}" trigger="{BtnGrabarCentral}" triggerEvent="click"/>
+			<mx:NumberValidator id="CenEnerPrimValidator" source="{CenEnerPrim}" property="selectedIndex" minValue="0" lowerThanMinError="{CenEnerPrim.prompt}" trigger="{BtnGrabarCentral}" triggerEvent="click"/>
+			<mx:NumberValidator id="CenEstadoValidator" source="{CenEstado}" property="selectedIndex" minValue="0" lowerThanMinError="{CenEstado.prompt}" trigger="{BtnGrabarCentral}" triggerEvent="click"/>
+		</fx:Array>
+		
+		
+		<fx:Array id="validatorsArrayModCentral">
+			<mx:DateValidator id="CenFechaRecepcionValidatorMOD" source="{CenFechaRecepcionMod}" property="text" required="true" inputFormat="DD/MM/YYYY" trigger="{BtnGrabarCentralMod}" triggerEvent="click"/>                         
+			<mx:StringValidator id="CenDirCentralValidatorMOD" source="{CenDirCentralMod}" property="text" required="true" trigger="{BtnGrabarCentralMod}" triggerEvent="click"/>    
+			<mx:StringValidator id="CenNomCentralValidatorMOD" source="{CenNomCentralMod}" property="text" required="true" trigger="{BtnGrabarCentralMod}" triggerEvent="click"/>
+			<mx:DateValidator id="CenFechaPuestaServValidatorMOD" source="{CenFechaPuestaServMod}" property="text" required="true" inputFormat="DD/MM/YYYY" trigger="{BtnGrabarCentralMod}" triggerEvent="click"/>     
+			<mx:StringValidator id="CenPropietarioValidatorMOD" source="{CenPropietarioMod}" property="text" required="true" trigger="{BtnGrabarCentralMod}" triggerEvent="click"/>    
+			<mx:StringValidator id="CenUnidadesValidatorMOD" source="{CenUnidadesMod}" property="text" required="true" trigger="{BtnGrabarCentralMod}" triggerEvent="click"/>
+			<mx:StringValidator id="CenPtoConexionValidatorMOD" source="{CenPtoConexionMod}" property="text" required="true" trigger="{BtnGrabarCentralMod}" triggerEvent="click"/>    
+			<mx:NumberValidator id="CenPotenciaValidatorMOD" source="{CenPotenciaMod}" property="text"        allowNegative="true" domain="real" minValue="0.01" maxValue="9.99" required="true" trigger="{BtnGrabarCentralMod}" triggerEvent="click"/>   
+			<mx:NumberValidator id="CenTensionValidatorMOD" source="{CenTensionMod}" property="text"        allowNegative="true" domain="real" minValue="0.01" maxValue="99.99" required="true" trigger="{BtnGrabarCentralMod}" triggerEvent="click"/>   
+			<mx:NumberValidator id="CenCapacidadValidatorMOD" source="{CenCapacidadMod}" property="text"        allowNegative="true" domain="real" minValue="0.01" maxValue="9.99" required="true" trigger="{BtnGrabarCentralMod}" triggerEvent="click"/>   
+			<mx:StringValidator id="CenAlimentadorValidatorMOD" source="{CenAlimentadorMod}" property="text" required="true" trigger="{BtnGrabarCentralMod}" triggerEvent="click"/>
+			<mx:NumberValidator id="CensistemaValidatorMOD" source="{CensistemaMod}" property="selectedIndex" minValue="0" lowerThanMinError="{Censistema.prompt}" trigger="{BtnGrabarCentralMod}" triggerEvent="click"/>
+			<mx:NumberValidator id="CenEnerPrimValidatorMOD" source="{CenEnerPrimMod}" property="selectedIndex" minValue="0" lowerThanMinError="{CenEnerPrim.prompt}" trigger="{BtnGrabarCentralMod}" triggerEvent="click"/>
+			<mx:NumberValidator id="CenEstadoValidatorMOD" source="{CenEstadoMod}" property="selectedIndex" minValue="0" lowerThanMinError="{CenEstado.prompt}" trigger="{BtnGrabarCentralMod}" triggerEvent="click"/>
+		</fx:Array>  
+		
+	</fx:Declarations>
+	
+	<fx:Script>
+		<![CDATA[
+			import com.esri.ags.FeatureSet;
+			import com.esri.ags.Graphic;
+			import com.esri.ags.SpatialReference;
+			import com.esri.ags.events.MapMouseEvent;
+			import com.esri.ags.geometry.Geometry;
+			import com.esri.ags.geometry.MapPoint;
+			import com.esri.ags.geometry.Polygon;
+			import com.esri.ags.layers.FeatureLayer;
+			import com.esri.ags.layers.supportClasses.FeatureEditResults;
+			import com.esri.ags.symbols.PictureMarkerSymbol;
+			import com.esri.ags.tasks.QueryTask;
+			import com.esri.ags.tasks.supportClasses.Query;
+			
+			import mx.collections.ArrayCollection;
+			import mx.collections.ArrayList;
+			import mx.collections.XMLListCollection;
+			import mx.controls.Alert;
+			import mx.events.CloseEvent;
+			import mx.events.ListEvent;
+			import mx.events.MenuEvent;
+			import mx.managers.PopUpManager;
+			import mx.rpc.AsyncResponder;
+			import mx.rpc.Fault;
+			import mx.utils.StringUtil;
+			import mx.validators.Validator;
+			
+			
+			import widgets.Pmgd.Class.Generica;
+			import widgets.Pmgd.Class.QPropietario;
+			import widgets.Pmgd.Skin.Central.ListCentral;
+			import widgets.Pmgd.Skin.Propietario.ListPropietarioSkin;
+			import widgets.Pmgd.Skin.TitleWindows.VentanaBusCentral;
+			import widgets.Pmgd.Skin.TitleWindows.VentanaBusPropietario;
+			import widgets.Pmgd.Url.Url;
+			
+			[Bindable]public var estado:ArrayList = new ArrayList;
+			[Bindable]public var menuBarCollection:XMLListCollection;
+			[Bindable]public var EnerPrim:ArrayList = new ArrayList;
+			[Bindable]public var Qprop:widgets.Pmgd.Class.QPropietario = new QPropietario;
+			[Bindable]public var LblCenProID:String;
+			[Bindable]public var LblCenProIDMOD:String;
+			public var elementosEncontrados:ArrayList;
+			[Bindable]public var sistema:ArrayList = new ArrayList;
+			public var comunaid:int;
+			public var alimentadorId:String;
+			public var tensionAlim:String;
+			
+			public var clickGraphic:Graphic;
+			public var posx:Number;
+			public var posy:Number;
+			public var posMod:String = "NO";
+			public var posxmod:Number = 0;
+			public var posymod:Number = 0;
+			public var MaxValueProp:int= 0;
+			public var max_propietario:int;
+			public var max_central:int;
+			
+			public var geom:Geometry = new Geometry;
+			public var objidCentral:int;
+			//Init application
+			private function init():void
+			{
+				initCollections();
+			}
+			
+			// Event handler to initialize the MenuBar control.
+			private function initCollections():void
+			{
+				menuBarCollection = new XMLListCollection(menubarXML);
+				
+			}
+			
+			private var menubarXML:XMLList =
+				<>                                
+						  <menuitem label="Registrar PMGD" >
+									 <menuitem label="Propietario" data="Propietario"/>
+									 <menuitem label="Central" data="Central"/>
+									 <menuitem label="Etapa" data="Etapa"/>
+						  </menuitem>
+						  <menuitem label="Reporte" >
+									 <menuitem label="Reporte 1-A" data="Reporte1"/>                          
+									 <menuitem label="Reporte 2-B" data="Reporte2">                                         
+									 </menuitem>
+						  </menuitem>
+				</>;
+			
+			private var listEmpresaXML:XMLList = 
+				<>
+						  
+				</>
+
+			//btn Inicio vuelve al menu principal
+			protected function btnInicio_clickHandler(event:MouseEvent):void
+			{
+				//myViewStack.selectedChild = inicio;
+				//ModVentanaNormal(); // TODO Auto-generated method stub                           
+			}
+			
+			// Event handler for the MenuBar control's itemClick event.
+			private function menuHandler(evt:MenuEvent):void
+			{
+				// Don't open the Alert for a menu bar item that 
+				// opens a popup submenu.                      
+				
+				
+				if (evt.item.@label == "Propietario") {
+					this.currentState = "bkmListPropietario";
+					ListPropietarioSkin
+					ListPropietario.queryPropietario();
+					
+				}
+				if (evt.item.@label == "Central") {
+					cargaCenEnerPrim();
+					CboSistema();
+					CBOEstado();
+					
+					this.currentState = "bkmListCentral";
+					txtFilterCentral.addEventListener(Event.CHANGE, filterGridCentral);
+					ListCentral.queryCentrales();
+					DataCentral.dataProvider = ListCentral.coleccioncentral;
+					
+				}
+				if (evt.item.@label == "Etapa") {
+					this.currentState = "bkmListEtapa";
+					ListEtapa.queryPropEtapa();
+				}
+				
+			}
+		
+			public var WinBusPropietario:VentanaBusPropietario = new VentanaBusPropietario();
+			public var WinBusCentral:VentanaBusCentral= new VentanaBusCentral();
+			//levanta popup propietarios en vista de central
+			protected function CenPropietario_clickHandler(event:MouseEvent):void
+			{
+				
+				PopUpManager.addPopUp(WinBusPropietario, this, true);
+				PopUpManager.centerPopUp(WinBusPropietario);
+				WinBusPropietario.addEventListener(FocusEvent.FOCUS_OUT,CenCargaProp);
+				
+				
+				function CenCargaProp(event:Event):void
+				{                          
+					CenPropietario.text = Generica.PropWinVar;
+					LblCenProID = Generica.PropIDWinvar;
+				}
+			}
+			
+			protected function CenPropietarioMod_clickHandler(event:MouseEvent):void
+			{
+				
+				PopUpManager.addPopUp(WinBusPropietario, this, true);
+				PopUpManager.centerPopUp(WinBusPropietario);
+				WinBusPropietario.addEventListener(FocusEvent.FOCUS_OUT,CenCargaProp);
+				
+				
+				function CenCargaProp(event:Event):void
+				{                          
+					CenPropietarioMod.text = Generica.PropWinVar;
+					LblCenProIDMOD = Generica.PropIDWinvar;
+				}
+			}
+			
+			//inicializa cbo sistema 
+			public function CboSistema():void
+			{
+				sistema.removeAll();
+				var queryTask:QueryTask = new QueryTask();
+				queryTask.url = "http://gisred.chilquinta/arcgis/rest/services/PMGD/PMGD/MapServer/3";
+				queryTask.useAMF = false;
+				var query:Query = new Query();
+				query.outFields = ["*"];
+				query.returnGeometry = false;
+				query.where = "1 = 1";
+				
+				queryTask.execute(query, new AsyncResponder(onResult, onFault));
+				
+				// add the graphic on the map
+				function onResult(featureSet:FeatureSet, token:Object = null):void
+				{
+					for each (var myGraphic:Graphic in featureSet.features)
+					{						
+						sistema.addItem({descripcion:myGraphic.attributes['NOMBRE_SISTEMA'],id:myGraphic.attributes['SISTEMA_ID']});
+						
+					}                          
+				}
+				function onFault(info:Object, token:Object = null):void
+				{
+					Alert.show("no se puede cargar tipo sistema "+ info.toString());
+				}      
+				
+			}
+			public function CBOEstado():void{
+				// TODO Auto-generated method stub
+				estado.removeAll();
+				var queryTask:QueryTask = new QueryTask();
+				queryTask.url = "http://gisred.chilquinta/arcgis/rest/services/PMGD/PMGD/MapServer/4";
+				queryTask.useAMF = false;
+				var query:Query = new Query();
+				query.outFields = ["*"];
+				query.returnGeometry = false;
+				query.where = "1 = 1";
+				
+				queryTask.execute(query, new AsyncResponder(onResult, onFault));
+				
+				// add the graphic on the map
+				function onResult(featureSet:FeatureSet, token:Object = null):void
+				{
+					for each (var myGraphic:Graphic in featureSet.features)
+					{                                 
+						
+						estado.addItem({descripcion:myGraphic.attributes['NOMBRE_ESTADO'],id:myGraphic.attributes['ESTADO_ID']});
+						
+					}
+					
+					
+					
+				}
+				function onFault(info:Object, token:Object = null):void
+				{
+					Alert.show("no se puede cargar tipo estado "+ info.toString());
+				}      
+				
+			}
+			//carga cbo energia primario
+			public function  cargaCenEnerPrim():void{
+				// TODO Auto-generated method stub
+				EnerPrim.removeAll();
+				var queryTask:QueryTask = new QueryTask();
+				queryTask.url = "http://gisred.chilquinta/arcgis/rest/services/PMGD/PMGD/MapServer/2";
+				queryTask.useAMF = false;
+				var query:Query = new Query();
+				query.outFields = ["*"];
+				query.returnGeometry = false;
+				query.where = "1 = 1";
+				query.orderByFields=["DESCRIPCION"];
+				queryTask.execute(query, new AsyncResponder(onResult, onFault));
+				
+				// add the graphic on the map
+				function onResult(featureSet:FeatureSet, token:Object = null):void
+				{
+					for each (var myGraphic:Graphic in featureSet.features)
+					{
+						
+						EnerPrim.addItem({descripcion:myGraphic.attributes['DESCRIPCION'],id:myGraphic.attributes['TIPO_ENERGETICO_PRIMARIO_ID']});
+						
+						
+					}
+				}
+				function onFault(info:Object, token:Object = null):void
+				{
+					Alert.show("no se puede cargar tipo sistema "+ info.toString());
+				}
+			}
+			
+			//Carga datos para modificar.
+			protected function QueryModCentral():void
+			{
+				
+				var idGrid:String = DataCentral.selectedItem['OBJECTID'];
+				// Query to get the cities under the specified state
+				var queryTask:QueryTask = new QueryTask();
+				queryTask.url = "http://gisred.chilquinta/arcgis/rest/services/PMGD/PMGD/FeatureServer/0";
+				queryTask.useAMF = false;
+				var query:Query = new Query();
+				query.outFields = ["*"];
+				query.returnGeometry = true;
+				query.where = "OBJECTID = " + idGrid ;
+				queryTask.execute(query, new AsyncResponder(onResult, onFault));
+				// add the graphic on the map
+				
+				function onResult( featureSet:FeatureSet, token:Object = null):void
+				{                          
+					
+					var dateFormatStr:String =  "dd/MM/yyyy";
+					var fecharecepcion:Number = featureSet.features[0].attributes["FECHA_RECEPCION"];
+					var fecharep:String =msToDate(fecharecepcion, dateFormatStr, true);                                  
+					var dia:String = fecharep.substring(0,2);
+					var mes:String = fecharep.substring(3,fecharep.length-5);
+					var ano:String = fecharep.substring(6,fecharep.length);
+					var fechapuesta:Number = featureSet.features[0].attributes["FECHA_PUESTA_SERVICIO"];
+					var fechaPues:String =msToDate(fechapuesta, dateFormatStr, true);
+					var dia2:String = fechaPues.substring(0,2);
+					var mes2:String = fechaPues.substring(3,fechaPues.length-5);
+					var ano2:String = fechaPues.substring(6,fechaPues.length);
+					//Guarda geometria.
+					geom = featureSet.features[0].geometry;
+					//guarda id comuna
+					comunaid = featureSet.features[0].attributes["COMUNA_ID"];
+					//guarda objectid comuna a modificar
+					objidCentral = featureSet.features[0].attributes["OBJECTID"];
+					//guarda id alimentador 
+					alimentadorId = featureSet.features[0].attributes["ALIMENTADOR_ID"];
+					//guarda propietario id
+					LblCenProIDMOD = featureSet.features[0].attributes["PROPIETARIO_ID"];
+					CenFechaRecepcionMod.selectedDate =  new Date (ano,int(mes)-1,dia); 
+					CenNomCentralMod.text = featureSet.features[0].attributes["NOMBRE_CENTRAL"];
+					CenDirCentralMod.text = featureSet.features[0].attributes["DIRECCION_CENTRAL"];
+					CenComunaMod.text = featureSet.features[0].attributes["NOMBRE_COMUNA"];
+					var NomSiste:String = featureSet.features[0].attributes["NOMBRE_SISTEMA"]
+					CensistemaMod.selectedIndex = obtenerid(sistema,NomSiste);
+					CenPotenciaMod.text= featureSet.features[0].attributes["POTENCIA_INSTALADA"];
+					CenCapacidadMod.text= featureSet.features[0].attributes["CAPACIDAD_INSTALADA"];
+					CenTensionMod.text= featureSet.features[0].attributes["NIVEL_TENSION"];     
+					var Nomtipoenerg:String = featureSet.features[0].attributes["NOMBRE_TIPO_ENERGETICO"];
+					CenEnerPrimMod.selectedIndex = obtenerid(EnerPrim,Nomtipoenerg); 
+					CenAlimentadorMod.text = featureSet.features[0].attributes["NOMBRE_ALIMENTADOR"];
+					CenPtoConexionMod.text= featureSet.features[0].attributes["PUNTO_CONEXION"];
+					CenUnidadesMod.text= featureSet.features[0].attributes["NUMERO_UNIDADES"];
+					CenFechaPuestaServMod.selectedDate= new Date (ano2,int(mes2)-1,dia2);
+					//CenEstadoMod.selectedIndex = featureSet.features[0].attributes["ESTADO_ID"];
+					var Nomestado:String = featureSet.features[0].attributes["NOMBRE_ESTADO"]
+					CenEstadoMod.selectedIndex = obtenerid(estado,Nomestado);
+					CenPropietarioMod.text = featureSet.features[0].attributes["NOMBRE_PROPIETARIO"];      
+					lblCoordxMod.text = "X: " + featureSet.features[0].attributes["X"];
+					posx = featureSet.features[0].attributes["X"];
+					lblCoordyMod.text = "Y: " + featureSet.features[0].attributes["Y"];
+					posy = featureSet.features[0].attributes["Y"];
+					
+				}
+				function onFault(info:Object, token:Object = null):void
+				{
+					Alert.show("Consulta modificacion central con problemas"+ info.toString());
+				}
+			}   
+			//Obtiene index de un Dropdownlist.
+			public function obtenerid(arrayc:ArrayList,nombre:String):int{                   
+				
+				//Alert.show(nombre);
+				var len:int = arrayc.length;                   
+				var x:int = 0;
+				for (var i:int=0;i<len;i++)
+				{      
+					if (arrayc.getItemAt(i).descripcion == nombre)
+					{      
+						//CenEnerPrim.selectedIndex = i;
+						x=i;                                    
+					}
+				}
+				
+				return x;
+				
+			}
+			
+			private function msToDate(ms:Number, dateFormat:String, useUTC:Boolean):String  
+			{  
+				
+				var date:Date = new Date(ms);  
+				if (date.milliseconds == 999){ // workaround for REST bug  
+					date.milliseconds++;  
+				}  
+				if (useUTC){  
+					date.minutes += date.timezoneOffset;  
+				}  
+				if (dateFormat){           
+					
+					dateFormatter.dateTimePattern = dateFormat;  
+					var result:String = dateFormatter.format(date);  
+					if (result){  
+						return result;  
+					}else{  
+						return dateFormatter.errorText;  
+					}  
+				}else{  
+					return date.toLocaleString(); 
+					
+				}  
+			} 
+			private var eventsLayerCentral:FeatureLayer = new FeatureLayer(widgets.Pmgd.Url.Url.ServiceCentral);
+			protected function EliminarCentral():void
+			{
+				
+				
+				try{
+					const deletes:Array = [DataCentral.selectedItem.gra];
+					
+					eventsLayerCentral.applyEdits(null,null,deletes,false,new AsyncResponder(featureLayer_editsCompleteHandler, featureLayer_faultHandler));
+					
+					function featureLayer_editsCompleteHandler(featureEditResults:FeatureEditResults, token:Object = null):void
+					{
+						Alert.show("Eliminación exitosa");
+						
+						ListCentral.queryCentrales();
+						
+					}
+					
+					function featureLayer_faultHandler(event:Fault, token:Object = null):void
+					{
+						Alert.show("delete failed: " + event.message)
+					}
+				}
+				catch (error:Error)
+				{
+					Alert.show("error at deleting process" + error.toString())
+				}
+			}
+			
+			
+			public function btnCFunction(e:MouseEvent):void{
+				switch(e.currentTarget.id)
+				{
+					case "BtnNewCentral":
+					{
+						wTemplate.width = 530;
+						wTemplate.height = 700;
+						bkmAddCentral.visible=true;
+						bkmListCentral.visible = false;
+						break;
+					}
+					case "BtnModCentral":
+					{
+						if (DataCentral.selectedIndex > -1){
+							togBtnUbicacionMod.label = "On";
+							togBtnUbicacionMod.selected = false;
+							map.removeEventListener(MapMouseEvent.MAP_CLICK,crearSimboloCentralmod)
+							QueryModCentral();
+							wTemplate.width = 530;
+							wTemplate.height = 700;
+							bkmModCentral.visible=true;
+							bkmListCentral.visible = false;
+						}else{
+							Alert.show("Usted no ha elegido una central para modificar.");
+						}
+						break;
+					}
+					case "BtnEliCentral":
+					{
+						if (DataCentral.selectedIndex > -1){
+							
+							Alert.show("¿Está seguro que desea eliminar la central?", "Centrales PMGD",mx.controls.Alert.YES | mx.controls.Alert.NO, this, alertClickHandler);
+							
+							function alertClickHandler(evt:CloseEvent):void {
+								if (evt.detail == Alert.YES) {
+									EliminarCentral();                               
+								} else {
+									
+								}
+							}
+						}else {
+							Alert.show("Usted no ha elegido una central para eliminar.");
+						}
+						
+						break;
+					}
+						
+						
+					case "btnVolverCentral":
+					{
+						wTemplate.width = 600;
+						wTemplate.height = 500;
+						bkmAddCentral.visible=false;
+						bkmListCentral.visible = true;
+						break;
+					}
+					case "BtnVolverModCentral":
+					{
+						wTemplate.width = 600;
+						wTemplate.height = 500;
+						bkmModCentral.visible=false;
+						bkmListCentral.visible = true;
+						break;
+					}
+						
+						
+					default:
+					{
+						break;
+					}
+				}
+			}
+			
+			
+			
+			protected function image1_clickHandler(event:Event):void
+			{
+				
+				if (event.target.selected){
+					
+					togBtn.label = "Off";
+					map.addEventListener(MapMouseEvent.MAP_CLICK,MaponClick);
+				} else{
+					
+					togBtn.label = "On";
+					
+					
+					map.removeEventListener(MapMouseEvent.MAP_CLICK,MaponClick);
+				}
+			}
+			
+			private function crearRectangulo(mapPoint:MapPoint,delta:Number):Array 
+			{ 
+				var arrayOfPoints:Array = new Array();
+				
+				arrayOfPoints[0] = new MapPoint(mapPoint.x-delta,mapPoint.y-delta,mapPoint.spatialReference);                      
+				arrayOfPoints[1] = new MapPoint(mapPoint.x-delta,mapPoint.y+delta,mapPoint.spatialReference);
+				arrayOfPoints[2] = new MapPoint(mapPoint.x+delta,mapPoint.y+delta,mapPoint.spatialReference);
+				arrayOfPoints[3] = new MapPoint(mapPoint.x+delta,mapPoint.y-delta,mapPoint.spatialReference);
+				arrayOfPoints[4] = new MapPoint(mapPoint.x-delta,mapPoint.y-delta,mapPoint.spatialReference);
+				
+				return arrayOfPoints;
+			}
+			
+			protected function MaponClick(event:MapMouseEvent):void
+			{
+				
+				var query:Query = new Query();
+				
+				query.spatialRelationship=Query.SPATIAL_REL_CONTAINS;
+				
+				var rectangulo:Polygon=new Polygon;
+				
+				rectangulo.addRing(crearRectangulo(event.mapPoint,5));
+				query.geometry = rectangulo;
+				var parametros:ArrayList=new ArrayList;
+				
+				parametros.addItem("rotulo");
+				parametros.addItem("alimentador");
+				parametros.addItem("comuna");           
+				query.outFields=parametros.toArray();                 
+				query.returnGeometry = true;            
+				
+				var queryTask:QueryTask =  new QueryTask;
+				queryTask.url = "http://gisred.chilquinta/arcgis/rest/services/Chilquinta_006/Nodos_006/MapServer/0";
+				
+				queryTask.execute(query, new AsyncResponder(onResult, onFault));                 
+				
+				function onResult(featureSet:FeatureSet, token:Object = null):void
+				{
+					
+					elementosEncontrados=new ArrayList;
+					
+					if (featureSet.features.length > 0)
+					{
+						for each (var encontrado:Graphic in featureSet.features)
+						{                                              
+							elementosEncontrados.addItem(encontrado);                                              
+						}
+					}else{
+						Alert.show("Punto de conexión no encontrado");
+						
+						
+					}
+					
+					if (elementosEncontrados.length>0){
+						
+						mostrarInformacionEnVentanaEdicion(elementosEncontrados.getItemAt(0) as Graphic);
+					}
+					else{
+						CenPtoConexion.text="";
+						CenAlimentador.text="";
+						CenComuna.text="";
+					}
+					
+				}
+				function onFault(info:Object, token:Object = null):void
+				{
+					
+					Alert.show(info.faultString + "\n\n" + info.faultDetail, "queryTask fault " + info.faultCode);
+				}
+				
+			}
+			
+			public function mostrarInformacionEnVentanaEdicion( gr:Graphic ):void{
+				var rotulo:String= gr.attributes["rotulo"];
+				var alimentador:String= gr.attributes["alimentador"];
+				var comuna:String= gr.attributes["comuna"];
+				
+				CenPtoConexion.text=rotulo;
+				CenAlimentador.text=alimentador;
+				CenComuna.text=comuna;
+				Guarda_idComuna(comuna);
+				BuscaTensionAlim(alimentador);
+				
+				
+			}
+			
+			private function Guarda_idComuna(comuna:String):void{
+				// TODO Auto-generated method stub
+				var queryTask:QueryTask = new QueryTask();
+				queryTask.url = "http://gisred.chilquinta/arcgis/rest/services/MapaBase/MapServer/4";
+				queryTask.useAMF = false;
+				var query:Query = new Query();
+				query.outFields = ["cd_sec"];
+				query.returnGeometry = false;
+				query.where = "nombre='" +comuna + "'";               
+				queryTask.execute(query, new AsyncResponder(onResult, onFault));
+				
+				// add the graphic on the map
+				function onResult(featureSet:FeatureSet, token:Object = null):void
+				{      
+					for each (var myGraphic:Graphic in featureSet.features)
+					{                                       
+						comunaid=(myGraphic.attributes['cd_sec']);                                      
+					}                   
+					
+				}
+				function onFault(info:Object, token:Object = null):void
+				{
+					Alert.show("no se puede cargar tipo sistema "+ info.toString());
+				}      
+			}
+			
+			private function BuscaTensionAlim(alimentador:String):void
+			{
+				// TODO Auto-generated method stub
+				var queryTask:QueryTask = new QueryTask();
+				queryTask.url = "http://gisred.chilquinta/arcgis/rest/services/Chilquinta_006/Chilquinta/MapServer/4";
+				queryTask.useAMF = false;
+				var query:Query = new Query();
+				query.outFields = ["id_alimentador,tension"];
+				query.returnGeometry = false;
+				query.where = "nombre='" +alimentador + "'";                
+				queryTask.execute(query, new AsyncResponder(onResult, onFault));
+				
+				// add the graphic on the map
+				function onResult(featureSet:FeatureSet, token:Object = null):void
+				{                                       
+					
+					
+					for each (var myGraphic:Graphic in featureSet.features)
+					{                                       
+						alimentadorId=(myGraphic.attributes['id_alimentador']);     
+						tensionAlim =(myGraphic.attributes['tension']);
+						tensionAlim = tensionAlim.substring(0,2);
+						
+						CenTension.text = tensionAlim;
+					}                   
+					
+				}
+				
+				function onFault(info:Object, token:Object = null):void
+				{
+				}
+			}
+			
+			protected function BtnUbiCentral_clickHandler(event:Event):void
+			{
+				if (event.target.selected){
+					
+					togBtnUbicacion.label = "Off";
+					lblCoordxMod.text = "0";
+					lblCoordyMod.text = "0";
+					map.addEventListener(MapMouseEvent.MAP_CLICK,crearSimboloCentral);
+				} else{
+					togBtnUbicacion.label = "On";
+					map.removeEventListener(MapMouseEvent.MAP_CLICK,crearSimboloCentral);
+				}
+				
+			}
+			[Bindable]private var errors:Array;
+			protected function BtnGrabarCentral_clickHandler(event:MouseEvent):void
+			{
+				
+				errors = new Array();
+				errors = Validator.validateAll(validatorsArray2);
+				//Grabar_nueva_central();
+				
+				if (errors.length == 0)
+				{
+					Alert.show("¿Está seguro que desea guardar?", "Ingreso de Central",mx.controls.Alert.YES | mx.controls.Alert.NO, this, alertClickHandler);
+					
+					function alertClickHandler(evt:CloseEvent):void 
+					{
+						if (evt.detail == Alert.YES)
+						{      
+							
+							if (lblCoordx.text != "X: 0"){
+								Grabar_nueva_central();
+								
+							}else {
+								Alert.show("Por favor ingrese una coordenada");
+							}
+							
+						}
+						else 
+						{
+							//     LimpiFormPropietario();
+						}
+					}
+				}                          
+				else
+				{                          
+					Alert.show('Por favor complete los campos requeridos.','Revise los campos requeridos.');                                       
+				}
+			}
+			
+			protected function Grabar_nueva_central():void
+			{
+				
+				// TODO Auto-generated method stub
+				var queryTask:QueryTask = new QueryTask();
+				queryTask.url = "http://gisred.chilquinta/arcgis/rest/services/PMGD/PMGD/MapServer/0";
+				queryTask.useAMF = false;
+				var query:Query = new Query();
+				query.outFields = ["CENTRAL_ID"];
+				query.returnGeometry = false;
+				query.where = "CENTRAL_ID=(SELECT MAX(CENTRAL_ID) FROM CENTRAL_PMGD WHERE EMPRESA_ID = 6)";
+				query.orderByFields=["CENTRAL_ID"];
+				queryTask.execute(query, new AsyncResponder(onResult, onFault));
+				
+				
+				
+				// add the graphic on the map
+				function onResult(featureSet:FeatureSet, token:Object = null):void
+				{                                       
+					
+					for each (var myGraphic:Graphic in featureSet.features)
+					{
+						
+						MaxValueProp=(myGraphic.attributes['CENTRAL_ID']);
+						max_central = MaxValueProp + 1;
+						
+					}                   
+					GRABA_CENTRAL();                  
+				}
+				
+				
+				function onFault(info:Object, token:Object = null):void
+				{
+					Alert.show("no se puede cargar tipo sistema "+ info.toString());
+				}      
+			}
+			public var myPropLayer:FeatureLayer = new FeatureLayer;
+			//graba nueva central
+			protected function GRABA_CENTRAL():void{
+				
+				var adds:Array=new Array;
+				var i:int = 0;
+				var nuevaCentral:* = new Object;
+				
+				var CEnSistemaId:int = Censistema.selectedItem.id;
+				var CenTipoenerID:int = CenEnerPrim.selectedItem.id;
+				var CenTipoEstadoID:int = CenEstado.selectedItem.id;                            
+				var potInstalada:Number = Number(CenPotencia.text);
+				var NomEnerge:String = CenEnerPrim.selectedItem.descripcion;
+				var NomEstado:String = CenEstado.selectedItem.descripcion;
+				var NomSistema:String = Censistema.selectedItem.descripcion;
+				
+				nuevaCentral["EMPRESA_ID"]= "006";                                 
+				nuevaCentral["CENTRAL_ID"]= max_central;
+				nuevaCentral["FECHA_RECEPCION"]= CenFechaRecepcion.text;
+				nuevaCentral["NOMBRE_CENTRAL"]= CenNomCentral.text;
+				nuevaCentral["DIRECCION_CENTRAL"]=CenDirCentral.text;
+				nuevaCentral["COMUNA_ID"]=comunaid;                                
+				nuevaCentral["SISTEMA_ID"]=CEnSistemaId;
+				nuevaCentral["POTENCIA_INSTALADA"]= potInstalada;
+				nuevaCentral["NIVEL_TENSION"]= Number(CenTension.text);
+				nuevaCentral["TIPO_ENERGETICO_PRIMARIO_ID"]= CenTipoenerID;
+				nuevaCentral["ALIMENTADOR_ID"]= Number(alimentadorId);
+				nuevaCentral["PUNTO_CONEXION"]= CenPtoConexion.text;
+				nuevaCentral["NUMERO_UNIDADES"]= CenUnidades.text;
+				nuevaCentral["FECHA_PUESTA_SERVICIO"]= CenFechaPuestaServ.text;
+				nuevaCentral["ESTADO_ID"]= CenTipoEstadoID;
+				nuevaCentral["PROPIETARIO_ID"]= LblCenProID;
+				nuevaCentral["X"]= posx;
+				nuevaCentral["Y"]= posy;
+				nuevaCentral["CAPACIDAD_INSTALADA"]= Number(CenCapacidad.text);
+				nuevaCentral["NOMBRE_ALIMENTADOR"]= CenAlimentador.text;
+				nuevaCentral["NOMBRE_TIPO_ENERGETICO"]= NomEnerge;
+				nuevaCentral["NOMBRE_ESTADO"]= NomEstado;
+				nuevaCentral["NOMBRE_PROPIETARIO"]= CenPropietario.text;
+				nuevaCentral["NOMBRE_COMUNA"]=CenComuna.text;
+				nuevaCentral["NOMBRE_SISTEMA"]=NomSistema;
+				
+				myPropLayer.url = "http://gisred.chilquinta/arcgis/rest/services/PMGD/PMGD/FeatureServer/0";       
+				
+				
+				var graficoEditadoActual:Graphic=new Graphic(new MapPoint(posx, posy,new SpatialReference(3857)),null,nuevaCentral);
+				adds[0]=graficoEditadoActual;    
+				
+				
+				
+				
+				myPropLayer.applyEdits(adds,null,null, false,new AsyncResponder(onResult, onFault));
+				
+				function onResult():void
+				{
+					Alert.show("Central agregada");
+					map.defaultGraphicsLayer.remove(clickGraphic);
+					myPropLayer.refresh();
+					
+					wTemplate.width = 600;
+					wTemplate.height = 500;
+					bkmAddCentral.visible=false;
+					bkmListCentral.visible = true;
+					ListCentral.queryCentrales();
+					DataCentral.dataProvider = ListCentral.coleccioncentral;
+				}
+				
+				function onFault(info:Object, token:Object = null):void
+				{
+					Alert.show("Error al editar nuevo elemento "+info.toString());
+				}
+				
+			}
+			
+			public function crearSimboloCentral(event:MapMouseEvent):void{
+				map.defaultGraphicsLayer.clear();
+				var redglow:PictureMarkerSymbol = new PictureMarkerSymbol;
+				redglow.width=60; redglow.height=60; redglow.source="assets/images/Red_glow.swf"; redglow.xoffset=-17; redglow.yoffset=18;
+				
+				var clickLocation:MapPoint = new MapPoint;
+				//Proviene del evento mapmouseevent, hace click en el mapa para dibujar
+				clickLocation = event.mapPoint;
+				clickGraphic = new Graphic(event.mapPoint, redglow);
+				map.defaultGraphicsLayer.add(clickGraphic);
+				
+				posx = Number(clickLocation.x.toString());
+				posy = Number(clickLocation.y.toString());
+				
+				lblCoordx.text = "X: " + clickLocation.x.toString();
+				lblCoordy.text = "Y: " + clickLocation.y.toString();
+				
+			}
+			
+			[Bindable]private var errorsMOD:Array;
+			
+			protected function BtnGrabarCentralMod_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				// TODO Auto-generated method stub
+				errorsMOD = new Array();                          
+				errorsMOD = Validator.validateAll(validatorsArrayModCentral);                          
+			
+				
+				if ((errorsMOD.length == 0)){
+					
+					Alert.show("¿Está seguro que desea guardar las modificaciones?", "Modificacion de Central",mx.controls.Alert.YES | mx.controls.Alert.NO, this, alertClickHandler);
+					
+					function alertClickHandler(evt:CloseEvent):void {
+						if (evt.detail == Alert.YES) {
+							//busca el idalimentador antes de modificarlo
+							BuscaTensionAlim(CenAlimentadorMod.text);
+							queryPropietarioID(CenPropietarioMod.text);
+						
+							modificarCentral();
+						} else {
+							
+						}
+					}
+				}                          
+				else{                      
+					Alert.show('Por favor complete los campos requeridos.','Revise los campos requeridos.');
+					
+				}
+				
+			}
+			public function queryPropietarioID(p:String):void
+			{
+				
+				var queryTask:QueryTask = new QueryTask(widgets.Pmgd.Url.Url.ServicePropietario);
+				var query:Query = new Query();
+				query.where = "EMPRESA_ID = 6 AND PROPIETARIO_PMGD='" + p + "'";
+				query.outFields = ['*'];
+				query.returnGeometry = false;
+				queryTask.execute(query, new AsyncResponder(onResultQuery, onFaultQuery));
+				
+				
+				function onResultQuery(featureSet:FeatureSet, token:Object = null):void
+				{      
+					LblCenProIDMOD = featureSet.features[0].attributes["PROPIETARIO_ID"];
+					
+				}
+				function onFaultQuery(info:Object, token:Object = null):void
+				{   
+					Alert.show("Error en consulta","Carga de propietarios");
+				}
+				
+				
+			}
+			
+			public function modificarCentral():void{
+				//busca el id alimentador para modificarlo.
+			//	
+				var cambiosCentral:* = new Object;
+			
+				var CenTipoenerID:int = CenEnerPrimMod.selectedItem.id;
+				cambiosCentral["OBJECTID"]= objidCentral; 
+				cambiosCentral["EMPRESA_ID"]= 6;
+				//Alert.show(DataCentral.selectedItem['CENTRAL_ID']);
+				cambiosCentral["CENTRAL_ID"]= int(DataCentral.selectedItem['CENTRAL_ID']);
+				cambiosCentral["NOMBRE_CENTRAL"]= String(CenNomCentralMod.text);
+				cambiosCentral["FECHA_RECEPCION"]= CenFechaRecepcionMod.text;
+				
+				cambiosCentral["DIRECCION_CENTRAL"]=String(CenDirCentralMod.text);
+				cambiosCentral["COMUNA_ID"]=comunaid;                                
+				cambiosCentral["SISTEMA_ID"]= int(CensistemaMod.selectedItem.id);
+				cambiosCentral["POTENCIA_INSTALADA"]= Number(CenPotenciaMod.text);;
+				cambiosCentral["NIVEL_TENSION"]= Number(CenTensionMod.text);
+				cambiosCentral["TIPO_ENERGETICO_PRIMARIO_ID"]= int(CenEnerPrimMod.selectedItem.id);
+				cambiosCentral["ALIMENTADOR_ID"]= alimentadorId;
+				cambiosCentral["PUNTO_CONEXION"]= String(CenPtoConexionMod.text);
+				cambiosCentral["NUMERO_UNIDADES"]= int(CenUnidadesMod.text);
+				cambiosCentral["FECHA_PUESTA_SERVICIO"]=CenFechaPuestaServMod.text;
+				cambiosCentral["ESTADO_ID"]= CenEstadoMod.selectedItem.id;
+				cambiosCentral["PROPIETARIO_ID"]= LblCenProIDMOD;
+			
+				
+				cambiosCentral["CAPACIDAD_INSTALADA"]= Number(CenCapacidadMod.text);
+				
+				cambiosCentral["NOMBRE_ALIMENTADOR"]= CenAlimentadorMod.text;
+				cambiosCentral["NOMBRE_TIPO_ENERGETICO"]= CenEnerPrimMod.selectedItem.descripcion;
+				cambiosCentral["NOMBRE_ESTADO"]= String(CenEstadoMod.selectedItem.descripcion);
+				cambiosCentral["NOMBRE_PROPIETARIO"]= String(CenPropietarioMod.text);
+				cambiosCentral["NOMBRE_COMUNA"]= String(CenComunaMod.text);
+				cambiosCentral["NOMBRE_SISTEMA"]=String(CensistemaMod.selectedItem.descripcion);
+				
+				//	Alert.show(LblCenProIDMOD) 26;
+				
+				var propFeature:FeatureLayer = new FeatureLayer();
+				
+				propFeature.url = "http://gisred.chilquinta/arcgis/rest/services/PMGD/PMGD/FeatureServer/0";
+				
+				if ( posMod == "SI" )
+				{
+					
+					cambiosCentral["X"]= posxmod;
+					cambiosCentral["Y"]= posymod;
+					//Alert.show(String("diff"));
+					var nuevoGraphic:Graphic = new Graphic(new MapPoint(posxmod,posymod, new SpatialReference(102100)), null, cambiosCentral);
+					propFeature.applyEdits(null,[nuevoGraphic],null, false,new AsyncResponder(onResult, onFault));
+						
+				}
+				else
+				{	
+					cambiosCentral["X"]= posx;
+					cambiosCentral["Y"]= posy;
+				//	Alert.show(String("ig" + " " + String(posx)));
+					var nuevoGraphic:Graphic = new Graphic(null, null, cambiosCentral);
+					propFeature.applyEdits(null,[nuevoGraphic],null, false,new AsyncResponder(onResult, onFault));
+					
+					
+					
+					
+				}	
+				function onResult():void
+				{
+					Alert.show("Central actualizada exitosamente");
+					ListCentral.queryCentrales();
+					bkmListCentral.visible = true;
+					bkmModCentral.visible = false;
+					togBtnUbicacionMod.selected = false;
+					map.defaultGraphicsLayer.remove(clickGraphic);
+				}
+				
+				function onFault(info:Object, token:Object = null):void
+				{
+					Alert.show("Error al modificar registro de central "+info.toString());
+				}
+				posMod = "NO";
+				
+				
+			}
+			
+			protected function image1MOD_clickHandler(event:Event):void
+			{
+				
+				if (event.target.selected){
+					
+					togBtnMod.label = "Off";
+					map.addEventListener(MapMouseEvent.MAP_CLICK,MaponClickMOD);
+				} else{
+					
+					togBtnMod.label = "On";
+					
+					map.removeEventListener(MapMouseEvent.MAP_CLICK,MaponClickMOD);
+				}
+			}
+			
+			protected function MaponClickMOD(event:MapMouseEvent):void
+			{
+				
+				var query:Query = new Query();
+				
+				query.spatialRelationship=Query.SPATIAL_REL_CONTAINS;
+				
+				var rectangulo:Polygon=new Polygon;
+				
+				rectangulo.addRing(crearRectangulo(event.mapPoint,5));
+				query.geometry = rectangulo;
+				var parametros:ArrayList=new ArrayList;
+				
+				parametros.addItem("rotulo");
+				parametros.addItem("alimentador");
+				parametros.addItem("comuna");           
+				query.outFields=parametros.toArray();                 
+				query.returnGeometry = true;            
+				
+				var queryTask:QueryTask =  new QueryTask;
+				queryTask.url = "http://gisred.chilquinta/arcgis/rest/services/Chilquinta_006/Nodos_006/MapServer/0";
+				
+				queryTask.execute(query, new AsyncResponder(onResult, onFault));                 
+				
+				function onResult(featureSet:FeatureSet, token:Object = null):void
+				{
+					
+					elementosEncontrados=new ArrayList;
+					
+					if (featureSet.features.length > 0)
+					{
+						for each (var encontrado:Graphic in featureSet.features)
+						{                                              
+							elementosEncontrados.addItem(encontrado);                                              
+						}
+					}else{
+						Alert.show("Punto de conexión no encontrado");
+						
+						
+					}
+					
+					if (elementosEncontrados.length>0){
+						
+						mostrarInformacionEnVentanaEdicionmod(elementosEncontrados.getItemAt(0) as Graphic);
+					}
+					else{
+						CenPtoConexion.text="";
+						CenAlimentador.text="";
+						CenComuna.text="";
+					}
+					
+				}
+				function onFault(info:Object, token:Object = null):void
+				{
+					
+					Alert.show(info.faultString + "\n\n" + info.faultDetail, "queryTask fault " + info.faultCode);
+				}
+				
+			}
+			public function mostrarInformacionEnVentanaEdicionmod( gr:Graphic ):void{
+				var rotulo:String= gr.attributes["rotulo"];
+				var alimentador:String= gr.attributes["alimentador"];
+				var comuna:String= gr.attributes["comuna"];
+				
+				CenPtoConexionMod.text=rotulo;
+				CenAlimentadorMod.text=alimentador;
+				CenComunaMod.text=comuna;
+				Guarda_idComuna(comuna);
+				BuscaTensionAlimMOD(alimentador);
+				
+				
+			}
+			
+			private function BuscaTensionAlimMOD(alimentador:String):void
+			{
+				// TODO Auto-generated method stub
+				var queryTask:QueryTask = new QueryTask();
+				queryTask.url = "http://gisred.chilquinta/arcgis/rest/services/Chilquinta_006/Chilquinta/MapServer/4";
+				queryTask.useAMF = false;
+				var query:Query = new Query();
+				query.outFields = ["id_alimentador,tension"];
+				query.returnGeometry = false;
+				query.where = "nombre='" +alimentador + "'";                
+				queryTask.execute(query, new AsyncResponder(onResult, onFault));
+				
+				// add the graphic on the map
+				function onResult(featureSet:FeatureSet, token:Object = null):void
+				{                                       
+					
+					
+					for each (var myGraphic:Graphic in featureSet.features)
+					{                                       
+						alimentadorId=(myGraphic.attributes['id_alimentador']);     
+						tensionAlim =(myGraphic.attributes['tension']);
+						tensionAlim = tensionAlim.substring(0,2);
+						
+						CenTensionMod.text = tensionAlim;
+					}                   
+					
+				}
+				
+				function onFault(info:Object, token:Object = null):void
+				{
+				}
+			}
+			
+			protected function BtnUbiCentralMOD_clickHandler(event:Event):void
+			{
+				if (event.target.selected){
+					
+					togBtnUbicacionMod.label = "Off";
+					map.addEventListener(MapMouseEvent.MAP_CLICK,crearSimboloCentralmod);
+				} else{
+					
+					togBtnUbicacionMod.label = "On";
+					map.removeEventListener(MapMouseEvent.MAP_CLICK,crearSimboloCentralmod);
+				}
+				
+			}
+			
+			public function crearSimboloCentralmod(event:MapMouseEvent):void{
+				map.defaultGraphicsLayer.clear();
+				var redglow:PictureMarkerSymbol = new PictureMarkerSymbol;
+				redglow.width=60; redglow.height=60; redglow.source="assets/images/Red_glow.swf"; redglow.xoffset=-17; redglow.yoffset=18;
+				
+				var clickLocation:MapPoint = new MapPoint;
+				//Proviene del evento mapmouseevent, hace click en el mapa para dibujar
+				clickLocation = event.mapPoint;
+				clickGraphic = new Graphic(event.mapPoint, redglow);
+				map.defaultGraphicsLayer.add(clickGraphic);
+				
+				posxmod = Number(clickLocation.x.toString());
+				posymod = Number(clickLocation.y.toString());
+				posMod = "SI";
+				lblCoordxMod.text = "X: " + clickLocation.x.toString();
+				lblCoordyMod.text = "Y: " + clickLocation.y.toString();
+				
+			}
+			
+			
+			protected function DataCentral_itemClickHandler(event:ListEvent):void
+			{
+					
+					var queryTaskOT:QueryTask = new QueryTask();
+					queryTaskOT.showBusyCursor = true;
+					
+					queryTaskOT.url=widgets.Pmgd.Url.Url.ServiceCentral;
+					queryTaskOT.useAMF=false;
+					
+					var querycentral:Query = new Query();
+					querycentral.outSpatialReference=  map.spatialReference;
+					querycentral.returnGeometry=true;
+					
+					
+					querycentral.where="OBJECTID=" + DataCentral.selectedItem['OBJECTID'];
+					
+					
+					queryTaskOT.execute(querycentral, new AsyncResponder(onResult, onFault));
+					
+					function onResult(featureSet:FeatureSet, token:Object = null):void
+					{
+						map.zoomTo(featureSet.features[0].geometry);                      
+						map.level = 16;                               
+						
+						
+					}
+					function onFault(info:Object, token:Object = null):void
+					{
+						Alert.show(info.toString(), "Zoom con Problemas");
+					}
+
+			}			
+			
+			
+			protected function filterGridCentral(event:Event):void
+			{
+				/* To get this function to work, only edit variables filterText, columnArray, gridDataProvider, and dataGridName. 
+				Everything else is dynamic. Do not edit variable names. */
+				var filterText:String = StringUtil.trim(txtFilterCentral.text.toLowerCase()); //Trimmed text String to filter by
+				var columnArray:Array = ['NOMBRE_CENTRAL','NOMBRE_ALIMENTADOR','POTENCIA_INSTALADA','CAPACIDAD_INSTALADA','NOMBRE_TIPO_ENERGETICO','NOMBRE_ESTADO','NOMBRE_PROPIETARIO']; //Datagrid column names to filter on
+				var gridDataProvider:ArrayCollection = ListCentral.coleccioncentral as ArrayCollection; //Name of datagrid's dataprovider. In this case e.g. databases
+				var dataGridName:String = 'DataCentral'; //Name of the datagrid you are filtering by
+				
+				//Do not edit code past this point
+				var filteredData:Array = [];
+				var added:Boolean=false;
+				var i:int;
+				var j:int;
+				
+				// Loop Through Grid
+				for(i=0; i < gridDataProvider.length; i++){    
+					added = false;
+					
+					//Loop through grid column
+					for(j=0; j<columnArray.length; j++){            
+						if(gridDataProvider[i][columnArray[j]]!=null){
+							
+							//Grab datagrid cell contents, trim it, and convert to lowercase for comparison.
+							var filterString:String = gridDataProvider[i][columnArray[j]].toString().toLowerCase();
+							
+							//Compare the datagrid string(filterString) to the user typed string(filterText).  
+							if(!added){      
+								//If the datagrid string matches the users string, put it into the array.
+								if(filterString.indexOf(filterText) != -1){
+									filteredData.push(gridDataProvider[i]);
+									added = true;
+								} 
+							}else{
+								//Do nothing, break out.
+								break;
+							}
+						}    
+					}
+				}
+				
+				//Set datagrid dataprovider
+				if(filterText.length == 0){
+					this[dataGridName].dataProvider = gridDataProvider; //Display the original unfiltered data
+				}else{
+					this[dataGridName].dataProvider = filteredData; //Pusht he filtered data into the datagrid
+				}
+			}
+			
+		]]>
+		
+	</fx:Script>
+	
+	<viewer:WidgetTemplate id="wTemplate"                                       
+						   width="600" height="500"
+						   visible="true">
+		<s:VGroup left="10" right="10" top="10" bottom="10" horizontalAlign="center">
+			
+			<mx:Canvas borderVisible="true" borderStyle="solid" width="100%">
+				<s:HGroup paddingTop="2" paddingBottom="2" horizontalAlign="center" >
+					<s:Button label="Inicio" id="btnInicio" click="btnInicio_clickHandler(event)"/>
+					<mx:MenuBar labelField="@label" itemClick="menuHandler(event);" 
+								dataProvider="{menuBarCollection}" />					
+				</s:HGroup>	
+			</mx:Canvas>
+			
+			<mx:Canvas borderVisible="true" borderStyle="solid" width="100%" height="100%">
+				<s:Group id="bkmInit" width="100%" height="100%" 
+						 visible="false" visible.bkmInit="true">
+					<SKIN:Inicio id="inicio" width="100%" height="100%" >
+					</SKIN:Inicio>
+				</s:Group>
+				<s:Group id="bkmListPropietario"
+						 width="100%" height="100%"
+						 visible="false"
+						 visible.bkmListPropietario="true">
+					<Propietario:ListPropietario id="propietarioList" width="100%" height="100%" >
+					</Propietario:ListPropietario>
+				</s:Group>
+				<s:Group id="bkmListEtapa"
+						 width="100%" height="100%"
+						 visible="false"
+						 visible.bkmListEtapa="true">
+					<Etapa:ListEtapa id="etapaList" width="100%" height="100%" >
+					</Etapa:ListEtapa>
+				</s:Group>
+				
+				<s:Group id="bkmListCentral"
+						 width="100%" height="100%"
+						 visible="false"
+						 visible.bkmListCentral="true">
+					<!-- ********************************Listado Central ***************************************************-->
+					<mx:Canvas id="ListadoCentrales"   label="Central" width="100%" height="100%" >
+						<s:VGroup width="100%" top="5" bottom="5" height="100%">
+							<mx:Label id="LblCentral" text="Listado de Centrales" fontSize="18"/>
+							<s:HGroup width="100%" verticalAlign="middle">
+								<mx:TextInput x="10" id="txtFilterCentral" width="100%" height="30" fontSize="14" fontWeight="bold" />
+								<mx:Image x="504" y="10" width="35" height="33"  source="assets/images/lupa_40x40.png"/>
+								<mx:Label id="label2"/>
+							</s:HGroup>
+							<mx:DataGrid id="DataCentral" resizableColumns="true" sortableColumns="true" editable="false"
+										 width="100%" height="100%" visible="true" selectable="true" itemClick="DataCentral_itemClickHandler(event)" >
+								<mx:columns>        
+									<mx:DataGridColumn  dataField="OBJECTID" headerText="OBJECTID" width="30" visible="false"/>
+									<mx:DataGridColumn  dataField="EMPRESA_ID" headerText="EMPRESA_ID" width="30" visible="false"/>
+									<mx:DataGridColumn  dataField="CENTRAL_ID" headerText="CENTRAL_ID" width="30" visible="true"/>
+									<mx:DataGridColumn  dataField="NOMBRE_CENTRAL" headerText="Nombre Central" width="30" />
+									<mx:DataGridColumn  dataField="NOMBRE_ALIMENTADOR" headerText="Alimentador" width="30" />
+									<mx:DataGridColumn  dataField="POTENCIA_INSTALADA" headerText="Potencia Generada" width="30" />
+									<mx:DataGridColumn  dataField="CAPACIDAD_INSTALADA" headerText="Capacidad Instalada" width="30" />
+									<mx:DataGridColumn  dataField="NOMBRE_TIPO_ENERGETICO" headerText="Nombre Tipo Energetico" width="30"/>
+									<mx:DataGridColumn  dataField="NOMBRE_ESTADO" headerText="Nombre Estado" width="30" />
+									<mx:DataGridColumn  dataField="NOMBRE_PROPIETARIO" headerText="Nombre Propietario" width="30" />
+								</mx:columns>
+							</mx:DataGrid>      
+							<mx:HBox>					
+							<s:Button id="BtnNewCentral" label="Nuevo" click="btnCFunction(event)" />  
+							<s:Button id="BtnModCentral" label="Modificar" click="btnCFunction(event)"/>
+							<s:Button id="BtnEliCentral" label="Eliminar" click="btnCFunction(event)"/>
+							</mx:HBox>
+						</s:VGroup>
+					</mx:Canvas>
+				</s:Group>
+				<!-- **************************************************NEW CENTRAL **********************************************-->
+				<s:Group id="bkmAddCentral"
+						 width="100%" height="100%"
+						 visible="false"
+						 visible.bkmAddCentral="true">
+						<mx:Canvas id="NewCentral"  label="central" width="100%" height="100%">
+							<mx:Form id="FormCentral" width="100%" height="100%">
+								<mx:FormHeading label="Complete Todos los campos del formulario."/>
+								<mx:FormItem label="Fecha Recepcion">
+									<mx:DateField  width="200" formatString="DD/MM/YYYY" yearNavigationEnabled="true" id="CenFechaRecepcion"
+												   showToday="true"/>
+								</mx:FormItem>
+								<mx:FormItem label="Nombre Central">
+									<mx:TextInput id="CenNomCentral" width="200" maxChars="50"/>
+								</mx:FormItem>
+								<mx:FormItem label="Direccion Central">
+									<mx:TextInput id="CenDirCentral" width="200" maxChars="50"/>
+								</mx:FormItem>
+								<mx:FormItem label="Comuna">
+									<mx:TextInput id="CenComuna" width="200" maxChars="50" enabled="false"/>
+								</mx:FormItem>
+								<mx:FormItem label="Sistema">
+									<s:DropDownList id="Censistema"  width="200" selectedIndex="-1" prompt="Seleccione sistema.." dataProvider="{sistema}" labelField="descripcion"/>
+								</mx:FormItem>
+								<mx:FormItem label="Potencia Generación">
+									<mx:TextInput id="CenPotencia" width="200" maxChars="4" restrict="0-9\.\"/>
+								</mx:FormItem>
+								<mx:FormItem label="Capacidad Instalada">
+									<mx:TextInput id="CenCapacidad" width="200" maxChars="4" restrict="0-9\.\" />
+								</mx:FormItem>
+								<mx:FormItem label="Nivel Tension">
+									<mx:TextInput id="CenTension" width="200" maxChars="5" restrict="0-9\.\"/>
+								</mx:FormItem>
+								<mx:FormItem label="Tipo energetico Primario">
+									<s:DropDownList id="CenEnerPrim" width="200" dataProvider="{EnerPrim}"  enabled="true" prompt="Seleccione Tipo energía.." labelField="descripcion"/>
+								</mx:FormItem>
+								<mx:FormItem label="Alimentador">
+									<mx:TextInput id="CenAlimentador" width="200" maxChars="50" enabled="false"/>
+								</mx:FormItem>
+								<mx:FormItem label="Punto Conexion">
+									<s:HGroup width="100%">
+										<mx:TextInput id="CenPtoConexion" width="62%" enabled="false"/>
+										<s:ToggleButton id="togBtn" label="On" width="20%" height="24" click="image1_clickHandler(event)"/>
+										<!--<mx:Image  width="27" height="27"  source="assets/images/04_maps.png" click="image1_clickHandler(event)"/>-->       
+									</s:HGroup>
+									
+								</mx:FormItem>
+								<mx:FormItem label="Numero Unidades">
+									<mx:TextInput id="CenUnidades" width="200" maxChars="50" enabled="true"/>
+								</mx:FormItem>
+								<mx:FormItem label="Fecha Puesta Servicio">
+									<mx:DateField width="200" formatString="DD/MM/YYYY" yearNavigationEnabled="true" id="CenFechaPuestaServ"
+												  showToday="true"/>
+								</mx:FormItem>
+								<mx:FormItem label="Estado">
+									<s:DropDownList id="CenEstado" width="200" dataProvider="{estado}" selectedIndex="-1" labelField="descripcion" prompt="Seleccione estado.."  />
+								</mx:FormItem>
+								<mx:FormItem label="Propietario">
+									<mx:TextInput id="CenPropietario" width="200" click="CenPropietario_clickHandler(event)"/>
+									
+								</mx:FormItem>
+								<mx:FormItem label="Ubicacion Central">
+									<mx:HBox>
+										<s:ToggleButton id="togBtnUbicacion" label="On"  width="80" height="24" click="BtnUbiCentral_clickHandler(event)"/>
+										<mx:VBox>
+											<s:Label id="lblCoordx" text="X: 0"/>                       
+											<s:Label id="lblCoordy" text="Y: 0"/> 
+										</mx:VBox>
+										 
+									</mx:HBox>
+								</mx:FormItem>
+								
+								<mx:FormItem>
+								</mx:FormItem>
+								<mx:FormItem>
+									<s:HGroup width="200" horizontalAlign="center">
+										<s:Button id="BtnGrabarCentral" label="Grabar" click="BtnGrabarCentral_clickHandler(event)" />                                         
+										<s:Button id="btnVolverCentral" label="Volver" click="btnCFunction(event)"/>                 
+									</s:HGroup>                                                 
+								</mx:FormItem>
+								
+							</mx:Form>
+						</mx:Canvas>
+				</s:Group>
+				<!-- **************************************************MOD CENTRAL **********************************************-->	
+				
+				<s:Group id="bkmModCentral"
+						 width="100%" height="100%"
+						 visible="false"
+						 visible.bkmModCentral="true">
+				<mx:Canvas id="ModCentral"  label="central" width="100%" height="100%">
+					<mx:Form id="FormCentralMod" width="100%" height="100%">
+						<mx:FormHeading label="Complete Todos los campos del formulario."/>
+						<mx:FormItem label="Fecha Recepcion">
+							<mx:DateField  width="200" formatString="DD/MM/YYYY" yearNavigationEnabled="true" id="CenFechaRecepcionMod"
+										   showToday="true"/>
+						</mx:FormItem>
+						<mx:FormItem label="Nombre Central">
+							<mx:TextInput id="CenNomCentralMod" width="200" maxChars="50"/>
+						</mx:FormItem>
+						<mx:FormItem label="Direccion Central">
+							<mx:TextInput id="CenDirCentralMod" width="200" maxChars="50"/>
+						</mx:FormItem>
+						<mx:FormItem label="Comuna">
+							<mx:TextInput id="CenComunaMod" width="200" maxChars="50" enabled="false"/>
+						</mx:FormItem>
+						<mx:FormItem label="Sistema">
+							<s:DropDownList id="CensistemaMod"  width="200" selectedIndex="-1" prompt="Seleccione sistema.." labelField="descripcion" dataProvider="{sistema}"/>
+						</mx:FormItem>
+						<mx:FormItem label="Potencia Generación">
+							<mx:TextInput id="CenPotenciaMod" width="200" maxChars="4" restrict="0-9\.\"/>
+						</mx:FormItem>
+						<mx:FormItem label="Capacidad Instalada">
+							<mx:TextInput id="CenCapacidadMod" width="200" maxChars="4" restrict="0-9\.\" />
+						</mx:FormItem>
+						<mx:FormItem label="Nivel Tension">
+							<mx:TextInput id="CenTensionMod" width="200" maxChars="5" restrict="0-9\.\"/>
+						</mx:FormItem>
+						<mx:FormItem label="Tipo energetico Primario">
+							<s:DropDownList id="CenEnerPrimMod" width="200" labelField="descripcion"  enabled="true" prompt="Seleccione Tipo energía.." selectedIndex="-1" dataProvider="{EnerPrim}"/><!--initialize="CenEnerPrim_initializeHandler(event)"-->
+						</mx:FormItem>
+						<mx:FormItem label="Alimentador">
+							<mx:TextInput id="CenAlimentadorMod" width="200" maxChars="50" enabled="false"/>
+						</mx:FormItem>
+						<mx:FormItem label="Punto Conexion">
+							<s:HGroup width="100%">
+								<mx:TextInput id="CenPtoConexionMod" width="62%" enabled="false"/>
+								<s:ToggleButton id="togBtnMod" label="On" click="image1MOD_clickHandler(event);" width="20%" height="24"/>
+								<!--<mx:Image4  width="27" height="27"  source="assets/images/04_maps.png" click="image1_clickHandler(event)"/>-->       
+							</s:HGroup>
+							
+						</mx:FormItem>
+						<mx:FormItem label="Numero Unidades">
+							<mx:TextInput id="CenUnidadesMod" width="200" maxChars="50" enabled="true"/>
+						</mx:FormItem>
+						<mx:FormItem label="Fecha Puesta Servicio">
+							<mx:DateField width="200" formatString="DD/MM/YYYY" yearNavigationEnabled="true" id="CenFechaPuestaServMod"
+										  showToday="true"/>
+						</mx:FormItem>
+						<mx:FormItem label="Estado">
+							<s:DropDownList id="CenEstadoMod" width="200" dataProvider="{estado}" selectedIndex="-1" labelField="descripcion" prompt="Seleccione estado.." />
+						</mx:FormItem>
+						<mx:FormItem label="Propietario">
+							<mx:TextInput id="CenPropietarioMod" width="200" click="CenPropietarioMod_clickHandler(event)"/>
+							
+						</mx:FormItem>
+						<mx:FormItem label="Ubicacion Central">
+							<mx:HBox>
+							<s:ToggleButton id="togBtnUbicacionMod" label="On" click="BtnUbiCentralMOD_clickHandler(event)" width="80" height="24"/>
+								<mx:VBox>
+									<s:Label id="lblCoordxMod" text="X: 0"/>                       
+									<s:Label id="lblCoordyMod" text="Y: 0"/>  
+								</mx:VBox>
+							</mx:HBox>
+						</mx:FormItem>
+						
+						<mx:FormItem>
+						</mx:FormItem>
+						<mx:FormItem>
+							<s:HGroup width="200" horizontalAlign="center">
+								<s:Button id="BtnGrabarCentralMod" label="Grabar" click="BtnGrabarCentralMod_clickHandler(event)"/>                                         
+								<s:Button id="BtnVolverModCentral" label="Volver" click="btnCFunction(event)"/>                
+							</s:HGroup>                                                 
+						</mx:FormItem>
+					</mx:Form>				
+				</mx:Canvas>
+			</s:Group>
+		</mx:Canvas>
+		</s:VGroup>
+		
+		
+	</viewer:WidgetTemplate>
+</viewer:BaseWidget>
+

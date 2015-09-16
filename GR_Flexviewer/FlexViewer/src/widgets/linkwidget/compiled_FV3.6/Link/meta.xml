@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" ?>
+<configuration>
+    <label>Link Widget</label>
+    <widgetversion>3.6</widgetversion>
+    <icon>assets/images/i_folder.png</icon>
+    <openbydefault>false</openbydefault>
+    <description>This widget Simply allows Flex Viewer to have a link to a website. The link is added to the viewer as a widget that has no user interface, it only opens a website, image, doument, pdf, etc in a new browser window.</description>
+    <helpurl>http://www.arcgis.com/home/item.html?id=5e4717fe1bb247f89b9092308e569c30</helpurl>
+</configuration>

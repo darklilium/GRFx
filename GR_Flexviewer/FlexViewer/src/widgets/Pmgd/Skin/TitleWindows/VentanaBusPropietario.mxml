@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:TitleWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx"
+			   width="600" height="250" title="Busqueda de Propietario"
+			   borderAlpha="0.5"
+			   borderColor="0xffffff"			
+			   borderVisible="true"
+			   initialize="titlewindow1_initializeHandler(event)">
+	
+	
+	<fx:Script>
+		<![CDATA[	
+		
+			import com.esri.ags.FeatureSet;
+			import com.esri.ags.tasks.QueryTask;
+			import com.esri.ags.tasks.supportClasses.Query;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.events.FlexEvent;
+			import mx.managers.PopUpManager;
+			import mx.rpc.AsyncResponder;
+			import mx.utils.StringUtil;
+			
+			import widgets.Pmgd.Class.Generica;
+		 
+			public var coleccion:ArrayCollection = new ArrayCollection;
+			
+		
+			
+			protected function titlewindow1_initializeHandler(event:FlexEvent):void
+			{
+				// TODO Auto-generated method stub				
+			}
+			
+			protected function DGWinPropietario_initializeHandler(event:FlexEvent):void
+			{
+				// TODO Auto-generated method stub
+				
+				txtFilter2.addEventListener(Event.CHANGE, filterGrid);
+				
+				var queryTaskPropietario:QueryTask = new QueryTask();
+				queryTaskPropietario.url = "http://gisred.chilquinta/arcgis/rest/services/PMGD/PMGD/MapServer/7/query";
+				queryTaskPropietario.useAMF = false;
+				var queryPropietarioSelected:Query = new Query();
+				queryPropietarioSelected.outFields = ["*"];
+				queryPropietarioSelected.returnGeometry = false;
+				
+				queryPropietarioSelected.where="1=1";
+				
+				queryTaskPropietario.execute(queryPropietarioSelected, new AsyncResponder(onResult, onFault));
+				
+				var arrProp:Array = new Array;
+				
+				function onResult(featureSet:FeatureSet, token:Object = null):void
+				{
+					
+					coleccion.addAll(new ArrayCollection(featureSet.attributes));
+					DGWinPropietario.dataProvider = coleccion;
+				}
+				function onFault(info:Object, token:Object = null):void
+				{   
+					Alert.show("Error en consulta","Carga de propietarios");
+				}
+			}
+			
+			protected function filterGrid(event:Event):void
+			{
+				/* To get this function to work, only edit variables filterText, columnArray, gridDataProvider, and dataGridName. 
+				Everything else is dynamic. Do not edit variable names. */
+				var filterText:String = StringUtil.trim(txtFilter2.text.toLowerCase()); //Trimmed text String to filter by
+				var columnArray:Array = ['PERIODO_STAR','PROPIETARIO_PMGD','SIGLA_PMGD','RUT_PMGD','DIRECCION_PROPIETARIO','REPRESENTANTE','TELEFONO','EMAIL']; //Datagrid column names to filter on
+				var gridDataProvider:ArrayCollection = this.coleccion as ArrayCollection; //Name of datagrid's dataprovider. In this case e.g. databases
+				var dataGridName:String = 'DGWinPropietario'; //Name of the datagrid you are filtering by
+				
+				//Do not edit code past this point
+				var filteredData:Array = [];
+				var added:Boolean=false;
+				var i:int;
+				var j:int;
+				
+				// Loop Through Grid
+				for(i=0; i < gridDataProvider.length; i++){    
+					added = false;
+					
+					//Loop through grid column
+					for(j=0; j<columnArray.length; j++){            
+						if(gridDataProvider[i][columnArray[j]]!=null){
+							
+							//Grab datagrid cell contents, trim it, and convert to lowercase for comparison.
+							var filterString:String = gridDataProvider[i][columnArray[j]].toString().toLowerCase();
+							
+							//Compare the datagrid string(filterString) to the user typed string(filterText).  
+							if(!added){      
+								//If the datagrid string matches the users string, put it into the array.
+								if(filterString.indexOf(filterText) != -1){
+									filteredData.push(gridDataProvider[i]);
+									added = true;
+								} 
+							}else{
+								//Do nothing, break out.
+								break;
+							}
+						}    
+					}
+				}
+				
+				//Set datagrid dataprovider
+				if(filterText.length == 0){
+					this[dataGridName].dataProvider = gridDataProvider; //Display the original unfiltered data
+				}else{
+					this[dataGridName].dataProvider = filteredData; //Pusht he filtered data into the datagrid
+				}
+			}
+			
+			protected function DGWinPropietario_doubleClickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				var WinPropietario:String = DGWinPropietario.selectedItem['PROPIETARIO_PMGD'];
+				var WinPropietarioID:String = DGWinPropietario.selectedItem['PROPIETARIO_ID'];
+			
+				Generica.PropWinVar = WinPropietario;
+				Generica.PropIDWinvar =  WinPropietarioID;
+				
+				PopUpManager.removePopUp(this);
+			}
+			
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<s:VGroup width="100%" top="5" bottom="5" height="100%" paddingLeft="10" paddingRight="10" paddingBottom="10">
+		<s:HGroup width="100%" verticalAlign="middle" >
+			<mx:TextInput  x="10" id="txtFilter2" width="100%" height="30" fontSize="14" fontWeight="bold" />
+			<mx:Image  y="10" width="35" height="33"  source="assets/images/lupa_40x40.png"/>
+		
+		</s:HGroup>
+		
+		<mx:DataGrid id="DGWinPropietario" resizableColumns="true" sortableColumns="true" editable="false"  doubleClick="DGWinPropietario_doubleClickHandler(event)"
+					 doubleClickEnabled="true"
+					 width="100%" height="100%" visible="true" selectable="true" paddingLeft="10" initialize="DGWinPropietario_initializeHandler(event)">
+			<mx:columns>		
+				<mx:DataGridColumn dataField="OBJECTID" headerText="OBJECTID" width="30" visible="false"/>
+				<mx:DataGridColumn dataField="PROPIETARIO_ID" headerText="PROPIETARIO ID" width="30" visible="false" />
+				<mx:DataGridColumn dataField="PROPIETARIO_PMGD" headerText="Propietario PMGD" width="50"/>
+				<!--<mx:DataGridColumn dataField="SIGLA_PMGD" headerText="Sigla PMGD" width="50" />-->								
+				<mx:DataGridColumn dataField="RUT_PMGD" headerText="Rut PMGD" visible="true" width="40"  textAlign="right"/>
+				<!--<mx:DataGridColumn dataField="DIRECCION_PROPIETARIO" headerText="Direccion" visible="true" width="50" />-->
+				<mx:DataGridColumn dataField="REPRESENTANTE" headerText="Representante" visible="true" width="50" />
+				<mx:DataGridColumn dataField="TELEFONO" headerText="Telefono" visible="true" width="40" textAlign="right" />									
+				<mx:DataGridColumn dataField="EMAIL" headerText="email" visible="true" width="50" />									
+			</mx:columns>
+		</mx:DataGrid>	
+	</s:VGroup>
+	
+</s:TitleWindow>

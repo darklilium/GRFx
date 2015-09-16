@@ -1,0 +1,342 @@
+<viewer:BaseWidget xmlns:fx="http://ns.adobe.com/mxml/2009"
+				   xmlns:s="library://ns.adobe.com/flex/spark"
+				   xmlns:mx="library://ns.adobe.com/flex/mx"
+				   xmlns:viewer="com.esri.viewer.*"				   
+				   xmlns:components="com.esri.viewer.components.*"
+				   xmlns:esri="http://www.esri.com/2008/ags" 
+				   initialize="basewidget1_initializeHandler(event)"
+				   >	
+		
+	<fx:Declarations>	
+		<s:DateTimeFormatter id="dateFormatter" dateTimePattern="dd/MM/yyyy"/>
+	</fx:Declarations>
+	
+	<fx:Script>
+		<![CDATA[
+			import com.esri.ags.FeatureSet;
+			import com.esri.ags.Graphic;
+			import com.esri.ags.events.MapMouseEvent;
+			import com.esri.ags.geometry.MapPoint;
+			import com.esri.ags.geometry.Polygon;
+			import com.esri.ags.layers.ArcGISDynamicMapServiceLayer;
+			import com.esri.ags.layers.FeatureLayer;
+			import com.esri.ags.tasks.QueryTask;
+			import com.esri.ags.tasks.supportClasses.Query;
+			
+			import flash.net.navigateToURL;
+			
+			import mx.collections.ArrayCollection;
+			import mx.collections.ArrayList;
+			import mx.controls.Alert;
+			import mx.controls.Image;
+			import mx.events.FlexEvent;
+			import mx.rpc.AsyncResponder;
+			
+			import spark.primitives.supportClasses.StrokedElement;
+			
+			import MantenimientoPodas.URLS;
+			import widgets.Mantenimiento_inspecciones.Class;
+			
+			public var layer:ArcGISDynamicMapServiceLayer = new ArcGISDynamicMapServiceLayer(widgets.Mantenimiento_inspecciones.Class.service);
+			public var elementosEncontrados:ArrayList;
+			[Bindable]public var ID_Element:int = new int();
+			public var coleccion:ArrayCollection = new ArrayCollection();
+		
+			public var Foto1 : Image = new Image();
+			public var Foto2 : Image = new Image();
+			
+			public var url1:String;
+			public var url2:String;
+			
+			public var verImageDespues:Image = new Image;
+			public var verImageAntes:Image = new Image;
+			
+			protected function basewidget1_initializeHandler(event:FlexEvent):void
+			{
+				// TODO Auto-generated method stub
+				map.addLayer(layer);
+				map.addEventListener(MapMouseEvent.MAP_CLICK,MaponClick);
+			}
+			
+			//Maneja listener clic en el mapa
+			protected function MaponClick(event:MapMouseEvent):void
+			{
+				
+				var query:Query = new Query();
+				
+				query.spatialRelationship=Query.SPATIAL_REL_CONTAINS;
+				
+				var rectangulo:Polygon=new Polygon;
+				
+				rectangulo.addRing(crearRectangulo(event.mapPoint,5));
+				query.geometry = rectangulo;
+				var parametros:ArrayList=new ArrayList;
+				
+				parametros.addItem("ARCGIS.DBO.MANTENIMIENTO_INSPECCION.ID_ELEMENTO");				         
+				query.outFields=parametros.toArray();                 
+				query.returnGeometry = true;            
+				
+				var queryTask:QueryTask =  new QueryTask;
+				queryTask.url = widgets.Mantenimiento_inspecciones.Class.service_Nodo;
+				
+				queryTask.execute(query, new AsyncResponder(onResult, onFault));                 
+				
+				function onResult(featureSet:FeatureSet, token:Object = null):void
+				{
+					
+				
+					elementosEncontrados=new ArrayList;
+					
+					if (featureSet.features.length > 0)
+					{
+					
+						for each (var encontrado:Graphic in featureSet.features)
+						{                                              
+							elementosEncontrados.addItem(encontrado);                                            
+						}						
+					}
+					
+					if (elementosEncontrados.length>0){
+					
+						guardaId_elemento(elementosEncontrados.getItemAt(0) as Graphic);
+						muestrainfoInspeccion();
+					}
+					
+				}
+				function onFault(info:Object, token:Object = null):void
+				{
+					
+					Alert.show(info.faultString + "\n\n" + info.faultDetail, "queryTask fault " + info.faultCode);
+				}
+				
+			}
+			
+			//guarda id_elemento encontrado en variable 
+			private function guardaId_elemento( gr:Graphic ):void{
+				ID_Element= gr.attributes["ARCGIS.DBO.MANTENIMIENTO_INSPECCION.ID_ELEMENTO"];
+			//	Alert.show(ID_Element.toString());
+				
+			}
+			
+			// muestra la informacion en pantalla del detalle.
+			private function muestrainfoInspeccion():void{
+				consulta_inspecciones();
+				Foto1.source = "";
+				Foto2.source = "";
+				wTemplate.visible = true;
+			}
+			
+			//consulta inspecciones asociadas al elemento.
+			private function consulta_inspecciones():void{
+				
+				var queryTask:QueryTask = new QueryTask(widgets.Mantenimiento_inspecciones.Class.service_Nodo);
+				var query:Query = new Query();
+				query.where = "ARCGIS.DBO.MANTENIMIENTO_INSPECCION.ID_ELEMENTO = " + ID_Element;
+				query.outFields = ['*'];
+				query.returnGeometry = true;
+				queryTask.execute(query, new AsyncResponder(onResultQuery, onFaultQuery));
+				
+				var arrProp:Array = new Array;
+				
+				function onResultQuery(featureSet:FeatureSet, token:Object = null):void
+				{      
+					var k:int;
+					coleccion.removeAll();
+					for(k=0;k<featureSet.features.length;k++)
+					{
+						var recordGraphic:Graphic = featureSet.features[k];
+						coleccion.addItem({OBJECTID:recordGraphic.attributes["ARCGIS.DBO.MANTENIMIENTO_INSPECCION.OBJECTID"], 
+							TIPO:recordGraphic.attributes["ARCGIS.DBO.MANTENIMIENTO_INSPECCION.TIPO_OBS"],
+							OBS:recordGraphic.attributes["ARCGIS.DBO.MANTENIMIENTO_INSPECCION.OBS"], 
+							CLASIFICACION:recordGraphic.attributes["ARCGIS.DBO.MANTENIMIENTO_INSPECCION.CLASIFICACION"],
+							FECHA_CAT:dateFormatter.format(new Date(recordGraphic.attributes["ARCGIS.DBO.MANTENIMIENTO_INSPECCION.FECHA_CAT"])),
+							TXT1:recordGraphic.attributes["ARCGIS.DBO.MANTENIMIENTO_INSPECCION.TXT1"],							
+							gra:recordGraphic });
+					}
+					//esta asociacion da error al iniciar: da null al comienzo.
+					DataInspecciones.dataProvider = coleccion;
+					
+					
+					
+				}
+				function onFaultQuery(info:Object, token:Object = null):void
+				{   
+					Alert.show("Error en consulta","Carga de propietarios");
+				}
+			}
+			
+			//crea poligono para busqueda espacial
+			private function crearRectangulo(mapPoint:MapPoint,delta:Number):Array 
+			{ 
+				var arrayOfPoints:Array = new Array();
+				
+				arrayOfPoints[0] = new MapPoint(mapPoint.x-delta,mapPoint.y-delta,mapPoint.spatialReference);                      
+				arrayOfPoints[1] = new MapPoint(mapPoint.x-delta,mapPoint.y+delta,mapPoint.spatialReference);
+				arrayOfPoints[2] = new MapPoint(mapPoint.x+delta,mapPoint.y+delta,mapPoint.spatialReference);
+				arrayOfPoints[3] = new MapPoint(mapPoint.x+delta,mapPoint.y-delta,mapPoint.spatialReference);
+				arrayOfPoints[4] = new MapPoint(mapPoint.x-delta,mapPoint.y-delta,mapPoint.spatialReference);
+				
+				return arrayOfPoints;
+			}
+			
+			protected function DataInspecciones_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				FOTO1.removeAllChildren();
+				FOTO2.removeAllChildren();
+				//Alert.show(String(DataDetalleActividad.selectedItem['OBJECTID']));
+				
+				//el objeto imagen que tendrá el canvas
+				var verImageDespues:Image = new Image;
+				var verImageAntes:Image = new Image;
+				//imagen configuraciones
+				verImageDespues.scaleContent = true;
+				verImageDespues.maintainAspectRatio =false;
+				verImageDespues.percentWidth = 150;
+				verImageDespues.percentHeight = 150;
+				
+				verImageAntes.scaleContent = true;
+				verImageAntes.maintainAspectRatio =false;
+				verImageAntes.percentWidth = 150;
+				verImageAntes.percentHeight = 150;
+				
+				
+				var myDetalle:FeatureLayer = new FeatureLayer(widgets.Mantenimiento_inspecciones.Class.service_Inspeccion);
+				
+				var ObjInspeccion:int= DataInspecciones.selectedItem['OBJECTID'];  
+				//Alert.show(String(objActividad));
+				myDetalle.queryAttachmentInfos(ObjInspeccion,new AsyncResponder(onResult,onFault));  
+				
+				function onResult(event:Array, token:Object=null):void{  
+					//tiene attachment
+					if (event.length>0) 
+					{
+						switch(event.length)
+						{
+							case 1:
+							{
+								verImageDespues.source =  event[0].url;
+								FOTO1.addChild(verImageDespues);
+								url1 = String(event[0].url);
+								break;
+							}
+							case 2:
+							{
+								verImageDespues.source =  event[0].url;
+								FOTO1.addChild(verImageDespues);
+								verImageAntes.source =  event[1].url;
+								FOTO2.addChild(verImageAntes);
+								url1 = String(event[0].url);
+								url2 = String(event[1].url);
+								
+								break;
+							}
+								
+							default:
+							{
+								Alert.show("El detalle de inspección no tiene fotos.");
+								break;
+							}
+						}
+						
+						FOTO1.addEventListener(MouseEvent.CLICK,abrirHTML1);
+						FOTO2.addEventListener(MouseEvent.CLICK,abrirHTML2);
+					}
+						//no tiene attachment
+					else  
+					{
+						Alert.show("El detalle de inspección no tiene fotos.");
+					}
+					
+				}
+				function onFault(event:Object,token:Object=null):void{
+					Alert.show("No se pudo conectar al servicio de fotos adjuntas. Contáctese con el administrador de GISRED.");
+				}      
+			}
+			
+			
+			
+			public function abrirHTML1(event:MouseEvent):void
+			{
+				
+				//extraerZOOM(sseeSelected);
+				//URL DE ACCESO A LA WEB
+				//var url:String = "http://gisred.chilquinta/test/SSEE360.html";
+				var url:String = "http://127.0.0.1:8020/MantenimientoInspecciones/web/test/index.html";
+				var variables:URLVariables = new URLVariables();
+				//variables.numeroFoto = nFoto;
+				variables.foto = url1;				
+				var request:URLRequest = new URLRequest(url);
+				request.data = variables;
+				try {            
+					navigateToURL(request, url);
+				}
+				catch (e:Error) {
+					// handle error here
+					Alert.show("Error procesando URLRequest: " + e.toString());
+				}
+				
+			}
+			
+			public function abrirHTML2(event:MouseEvent):void
+			{
+				
+				//extraerZOOM(sseeSelected);
+				//URL DE ACCESO A LA WEB
+				//var url:String = "http://gisred.chilquinta/test/SSEE360.html";
+				var url:String = "http://127.0.0.1:8020/MantenimientoInspecciones/web/test/index.html";
+				var variables:URLVariables = new URLVariables();
+				//variables.numeroFoto = nFoto;
+				variables.foto = url2;				
+				var request:URLRequest = new URLRequest(url);
+				request.data = variables;
+				try {            
+					navigateToURL(request, url);
+				}
+				catch (e:Error) {
+					// handle error here
+					Alert.show("Error procesando URLRequest: " + e.toString());
+				}
+				
+			}
+			
+			protected function FOTO2_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				//abrirHTML(String(url2));
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<viewer:WidgetTemplate id="wTemplate" width="800" height="500"
+						   visible="false">
+		
+		<s:VGroup width="100%" top="5" bottom="5" height="100%">
+			<mx:Label id="LblProp" text="Listado de Inspecciones" fontSize="18"/>
+			
+			<mx:DataGrid id="DataInspecciones" resizableColumns="true" sortableColumns="true" editable="false"  
+						 width="100%" height="100%" visible="true" selectable="true" click="DataInspecciones_clickHandler(event)">
+				<mx:columns>        
+					<mx:DataGridColumn  dataField="OBJECTID" headerText="OBJECTID" width="30" visible="true"/>          
+					<mx:DataGridColumn  dataField="TIPO" headerText="TIPO" width="30" visible="true"/>                                                         
+					<mx:DataGridColumn dataField="OBS" headerText="OBSERVACION" width="50"/>
+					<mx:DataGridColumn dataField="CLASIFICACION" headerText="CLASIFICACION" width="50" />                                                
+					<mx:DataGridColumn dataField="FECHA_CAT" headerText="FECHA CATASTRO" visible="true" width="50" />
+					<mx:DataGridColumn dataField="TXT1" headerText="TEXTO1" visible="true" width="50" />
+				                                                      
+				</mx:columns>
+			</mx:DataGrid>                                 
+			<s:HGroup height="100%" width="100%">
+				
+				<mx:Canvas width="227" height="156" id="FOTO1" color="0x000000" horizontalScrollPolicy="off"
+						   verticalScrollPolicy="off" />
+				<mx:Canvas width="227" height="156" id="FOTO2" color="0x000000" horizontalScrollPolicy="off"
+						   verticalScrollPolicy="off" />
+				
+			</s:HGroup>
+		</s:VGroup>
+		
+	</viewer:WidgetTemplate>
+</viewer:BaseWidget>
+

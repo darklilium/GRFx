@@ -1,0 +1,58 @@
+<?xml version="1.0" ?>
+<!--
+////////////////////////////////////////////////////////////////////////////////
+//
+// Read more about ArcGIS Viewer for Flex - http://links.esri.com/flexviewer
+//
+////////////////////////////////////////////////////////////////////////////////
+-->
+<configuration>
+    <title>Link Widget Sample</title>
+    <subtitle>Preview of the Link Widget for FlexViewer 2.5</subtitle>
+    <logo>assets/images/logo.png</logo>
+    <style>
+    	<colors>0xffffff,0x103c87,0x359dc6,0x294867,0xffffff</colors> 
+    	<alpha>0.8</alpha>
+    </style>
+    <geometryservice url="http://tasks.arcgisonline.com/ArcGIS/rest/services/Geometry/GeometryServer" />
+
+    <!-- UI elements -->
+    <widget left="10"  top="50"    config="widgets/Navigation/NavigationWidget.xml" url="widgets/Navigation/NavigationWidget.swf"/>
+    <widget right="-2" bottom="-2" config="widgets/OverviewMap/OverviewMapWidget.xml" url="widgets/OverviewMap/OverviewMapWidget.swf"/>
+    <widget right="20" top="55"    config="widgets/MapSwitcher/MapSwitcherWidget.xml" url="widgets/MapSwitcher/MapSwitcherWidget.swf"/>
+    <widget left="0"   top="0"     config="widgets/HeaderController/HeaderControllerWidget.xml" url="widgets/HeaderController/HeaderControllerWidget.swf"/>
+
+    <map initialextent="-9559973 4601704 -9529513 4621654" top="40" zoomslidervisible="false" addarcgisbasemaps="true" wraparound180="true">
+        <operationallayers>
+			<layer label="Louisville Landbase" type="dynamic" visible="false" alpha="0.4"
+				   url="http://sampleserver1.arcgisonline.com/ArcGIS/rest/services/Louisville/LOJIC_LandRecords_Louisville/MapServer"/>
+            <layer label="Louisville Landbase Parcels" type="feature" visible="false" alpha="0.4"
+				   url="http://sampleserver1.arcgisonline.com/ArcGIS/rest/services/Louisville/LOJIC_LandRecords_Louisville/MapServer/0"/>
+			<layer label="Louisville Landbase Zoning" type="feature" visible="false" alpha="0.4"
+				   url="http://sampleserver1.arcgisonline.com/ArcGIS/rest/services/Louisville/LOJIC_LandRecords_Louisville/MapServer/2"/>
+			<layer label="Louisville Landbase Landuse" type="feature" visible="false" alpha="0.4"
+				   url="http://sampleserver1.arcgisonline.com/ArcGIS/rest/services/Louisville/LOJIC_LandRecords_Louisville/MapServer/1"/>
+			<layer label="Public Safety" type="dynamic" visible="true"
+				   url="http://sampleserver1.arcgisonline.com/ArcGIS/rest/services/Louisville/LOJIC_PublicSafety_Louisville/MapServer"/>
+        </operationallayers>
+    </map>
+
+    <!-- widgets organized into widget containers that manage close/open etc -->
+    <!-- supported layout property options: horizontal(default)|float|vertical|fix-->
+    <widgetcontainer layout="float">
+    	<widgetgroup label="Links">
+        	<widget label="Visit esri Website"
+        		icon="widgets/Link/assets/images/esri.png"
+        		config="widgets/Link/LinkWidget_esri.xml"
+        		url="widgets/Link/LinkWidget.swf"/>
+        	<widget label="Visit esri Flex Viewer Website"
+        		icon="widgets/Link/assets/images/esri.png"
+        		config="widgets/Link/LinkWidget_FlexViewer.xml"
+        		url="widgets/Link/LinkWidget.swf"/>
+        	<widget label="Flex Viewer Widget Communication PDF"
+        		icon="widgets/Link/assets/images/i_pdf2.png"
+        		config="widgets/Link/LinkWidget_PDF.xml"
+        		url="widgets/Link/LinkWidget.swf"/>
+        </widgetgroup>
+    </widgetcontainer>
+</configuration>

@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" 
+				layout="absolute" 
+				xmlns:MecGrid="com.mechan.MecGrid.*" 
+				creationComplete="initApp()" 
+				viewSourceURL="srcview/index.html">
+<mx:Style>
+FilterRenderer
+{
+	fontSize: 8;
+	verticalScrollBarStyleName: filterRendererScrollStyle;
+}
+
+.filterRendererScrollStyle {
+    downArrowUpSkin: Embed(source="widgets/ConsultaEquipos2/src/assets/downArrow.png");
+    downArrowOverSkin: Embed(source="widgets/ConsultaEquipos2/src/assets/downArrow.png");
+    downArrowDownSkin: Embed(source="widgets/ConsultaEquipos2/src/assets/downArrow.png");
+    upArrowUpSkin: Embed(source="widgets/ConsultaEquipos2/src/assets/upArrow.png");
+    upArrowOverSkin: Embed(source="widgets/ConsultaEquipos2/src/assets/upArrow.png");
+    upArrowDownSkin: Embed(source="widgets/ConsultaEquipos2/src/assets/upArrow.png");
+    thumbDownSkin: Embed(source="widgets/ConsultaEquipos2/src/assets/thumb.png",
+        scaleGridLeft="7", scaleGridTop="5", scaleGridRight="8", scaleGridBottom="7");
+    thumbUpSkin: Embed(source="widgets/ConsultaEquipos2/src/assets/thumb.png",
+        scaleGridLeft="7", scaleGridTop="5", scaleGridRight="8", scaleGridBottom="7");
+    thumbOverSkin: Embed(source="widgets/ConsultaEquipos2/src/assets/thumb.png",
+        scaleGridLeft="7", scaleGridTop="5", scaleGridRight="8", scaleGridBottom="7");
+    trackSkin: Embed(source="widgets/ConsultaEquipos2/src/assets/scrolltrack.png",
+        scaleGridLeft="7", scaleGridTop="4", scaleGridRight="8", scaleGridBottom="6" );    
+}
+</mx:Style>
+<mx:Script>
+	<![CDATA[
+		import com.esri.ags.FeatureSet;
+		import com.esri.ags.tasks.QueryTask;
+		import com.esri.ags.tasks.supportClasses.Query;
+		import com.mechan.MecGrid.mecGridClasses.CellOp;
+		import com.mechan.MecGrid.mecGridClasses.MecGridConst;
+		import com.mechan.MecGrid.mecGridClasses.MecGridEvent;
+		
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.rpc.AsyncResponder;
+		
+		import widgets.ConsultaEquipos2.src.classes.urls;
+
+		// This demonstrates how you can set MecGrid properties by XML.
+		// You can build ResourceXML With MecGridWizard by Exporting and copy to clipboard the source XML.
+		//
+		// Reversely you can set the property of XML String to Binary data and vice versa.
+		// 
+		[Bindable]
+		private var datasource:ArrayCollection;
+		[Bindable]public var coleccion:ArrayCollection = new ArrayCollection; 
+		
+		
+		
+		private function initApp():void
+		{
+			mgrid.dragEnabled = false;
+			mgrid.dropEnabled = false;
+			mgrid.dragMoveEnabled = false;
+			//mgrid.dropMode = MecGridConst.DRAGMODE_ROW | MecGridConst.DRAGMODE_COLUMN;
+			
+			applyDataProvider();
+		}
+		
+		private function applyDataProvider():void
+		{
+			//se cargan todos los equipos
+			coleccion.removeAll();
+			// TODO Auto-generated method stub
+			var queryTask:QueryTask = new QueryTask();
+			queryTask.url =widgets.ConsultaEquipos2.src.classes.urls.URL_EQUIPOS_LINEA;
+			queryTask.useAMF = false;
+			var query:Query = new Query();
+			query.outFields = ["id_equipo", "tipo","alimentador"];
+			query.returnGeometry = false;
+			query.where = "1=1";
+			queryTask.token = widgets.ConsultaEquipos2.src.classes.urls.token as String;
+			queryTask.execute(query, new AsyncResponder(onResult, onFault));
+			
+			// add the graphic on the map
+			function onResult(featureSet:FeatureSet, token:Object = null):void
+			{
+				coleccion.addAll(new ArrayCollection(featureSet.attributes));	
+				
+			}
+			function onFault(info:Object, token:Object = null):void
+			{
+				Alert.show("No se pueden obtener los equipos.  Contáctese con el administrador de GISRED."+ info.toString());
+			}
+			//var i:int;
+			//var n:int = 0;
+			
+			/*
+			for (i=0; i < dp.length; i++)
+			{
+				dp[i].qt1 = Math.random() * 1000;
+				dp[i].qt2 = Math.random() * 1000;
+				dp[i].qt3 = Math.random() * 1000;
+				dp[i].qt4 = Math.random() * 1000;
+				n = i + mgrid.Rows.fixed;
+				dp[i].avg = "=(D" + n + " + E" + n + " + F" + n + " + G" + n + ") / 4";
+			}
+			*/
+			//mgrid.addEventListener(MecGridEvent.DATAPROVIDER_UPDATE_FINISHED, dataProviderUpdatedHandler);
+			
+			
+			
+			//datasource = new ArrayCollection(dp);
+		}
+		/*
+		private function dataProviderUpdatedHandler(event:MecGridEvent):void
+		{
+			mgrid.removeEventListener(MecGridEvent.DATAPROVIDER_UPDATE_FINISHED, dataProviderUpdatedHandler);
+			mgrid.redraw = false;
+			mgrid.clearSubTotal();
+			mgrid.AddSubTotal("Total", [0, 1], MecGridConst.SUBTOTAL_SUM, -1, [2, 3, 4, 5], MecGridConst.SUBTOTAL_BELOWDATA);
+			mgrid.AddSubTotal("Country SubTotal", [1], MecGridConst.SUBTOTAL_SUM, 0, [2, 3, 4, 5], MecGridConst.SUBTOTAL_BELOWDATA);
+			mgrid.updateSubTotal();
+			mgrid.redraw = true;
+		}
+		*/
+		
+		/*
+		private function changeData():void
+		{
+			applyDataProvider();
+		}
+		/*
+		private function selectionModeChanged(event:Event):void
+		{
+			var selitem:String = uiSelectMode.selectedValue as String;
+			var selmode:int = CellOp.SELECT_SINGLE;
+			
+			switch (selitem)
+			{
+			case "row":
+				selmode = selmode | CellOp.SELECTIONMODE_ROW;
+				break;
+			case "cell":
+				selmode = selmode | CellOp.SELECTIONMODE_CELL;
+				break;
+			}
+			
+			mgrid.SelectionMode = selmode;
+		}
+		*/
+	]]>
+</mx:Script>
+<MecGrid:MecGrid id="mgrid" bottom="40" right="10" top="80" left="10" dataProvider="{coleccion}" EnableRowFilter="{cboShowFilter.selected}">
+	<!--
+	<MecGrid:ResourceXML>
+		<mx:XML xmlns="">
+			<List>
+			  <option cols="6" fixedrows="2" fixedcols="0" merge_option="4" merge_option_fixedcolumn="0" merge_option_fixedrow="2" showspreadsheet="F" selectionmode="17" sortoption="0" treeview="T" treeColumn="0" textalignment="6" textalignment_fixed="5"/>
+			  <columns>
+			    <column name="col_1" datafield="country" visible="T" editable="F" colindex="0" autowidth="T" width="61" datatype="5" textalign="4" textalign_fixed="10" formatstring="" merge="T" style="" header="Country;Country"/>
+			    <column name="col_2" datafield="city" visible="T" editable="F" colindex="1" autowidth="T" width="61" datatype="5" textalign="4" textalign_fixed="10" formatstring="" merge="T" style="" header="City;City"/>
+			    <column name="col_3" datafield="qt1" visible="T" editable="F" colindex="2" autowidth="T" width="88" datatype="4" textalign="10" textalign_fixed="10" formatstring="#,###.##" merge="F" style="" header="Visitors;1st Quater (A)"/>
+			    <column name="col_4" datafield="qt2" visible="T" editable="F" colindex="3" autowidth="T" width="92" datatype="4" textalign="10" textalign_fixed="10" formatstring="#,###.##" merge="F" style="test" header="Visitors;2nd Quater (B)"/>
+			    <column name="col_5" datafield="qt3" visible="T" editable="F" colindex="4" autowidth="T" width="90" datatype="4" textalign="10" textalign_fixed="10" formatstring="#,###.##" merge="F" style="" header="Visitors;3rd Quater (C)"/>
+			    <column name="col_6" datafield="qt4" visible="T" editable="F" colindex="5" autowidth="T" width="0" datatype="4" textalign="10" textalign_fixed="10" formatstring="#,###.##" merge="F" style="" header="Visitors;4th Quater (D)"/>
+			  </columns>
+			  <styles>
+			    <style name="normal" backcolor1="16777215" backcolor2="16777215" bordercolor="12566463" borderthickness="1" fontstyle="0" forecolor="3355443"/>
+			    <style name="fixedrow" backcolor1="15066597" backcolor2="15066597" bordercolor="6710886" borderthickness="1" fontstyle="0" forecolor="0"/>
+			    <style name="fixedcolumn" backcolor1="16317653" backcolor2="15066597" bordercolor="6710886" borderthickness="1" fontstyle="0" forecolor="0"/>
+			    <style name="spreadsheet" backcolor1="16317653" backcolor2="15066597" bordercolor="6710886" borderthickness="1" fontstyle="0" forecolor="0"/>
+			    <style name="subtotal" backcolor1="16317653" backcolor2="15066597" bordercolor="12566463" borderthickness="1" fontstyle="2" forecolor="0"/>
+			    <style name="test" backcolor1="13434879" backcolor2="16777215" bordercolor="12566463" borderthickness="1" fontstyle="5" forecolor="3355443"/>
+			  </styles>
+			</List>
+		</mx:XML>
+	
+	</MecGrid:ResourceXML>
+	-->
+</MecGrid:MecGrid>
+	<mx:Label x="10" y="10" text="MecGrid Demo with Row Filters" fontWeight="bold" fontSize="20" color="#FDFE88"/>
+<mx:HBox width="100%" height="26" bottom="0">
+    <mx:LinkButton label="Copyright (c) 2008 MECHAN. All Rights Reserved" 
+        click="navigateToURL(new URLRequest('http://code.google.com/p/flexspreadsheet/'));"
+        styleName="footerLink" alpha="0.2"
+         color="#DB93F9"/>
+    <mx:Spacer width="100%" />
+    <mx:LinkButton label="Created by MECHAN" 
+        click="navigateToURL(new URLRequest('mailto:mechan93@gmail.com'));"
+        styleName="footerLink"
+        textDecoration="underline" alpha="0.2"
+         color="#04FCFF"/>
+</mx:HBox>
+	<!-- <mx:Button label="Change Data" right="10" top="30" click="changeData()"/> -->
+	<mx:HBox y="54" right="10" left="10">
+		<mx:Label text="Selection Mode"/>
+		<!-- 
+		<mx:RadioButtonGroup id="uiSelectMode" change="selectionModeChanged(event)"/>
+		<mx:RadioButton label="Row Selection" groupName="uiSelectMode" value="row" selected="true"/>
+		<mx:RadioButton label="Cell Selection" groupName="uiSelectMode" value="cell"/>
+		-->
+		<mx:CheckBox label="ShowFilter" id="cboShowFilter"/>
+	</mx:HBox>
+</mx:Application>
